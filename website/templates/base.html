@@ -26,10 +26,23 @@
               <a class="nav-item nav-link" href="/about">About</a>
             </div>
             <!-- Navbar Right Side -->
+            {% if current_user.is_anonymous %}
             <div class="navbar-nav">
               <a class="nav-item nav-link" href="{{ url_for('login') }}">Login</a>
-              <a class="nav-item nav-link" href="{{ url_for('register') }}">Register</a>
+              <a class="nav-item nav-link" href="{{ url_for('signup') }}">Sign Up</a>
             </div>
+            {% else %}
+        
+            <a class="navbar-brand" href="{{ url_for('user', username=current_user.username) }}">Profile</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <a class="navbar-brand" href="{{ url_for('logout') }}">Logout</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            {% endif %}
           </div>
         </div>
       </nav>

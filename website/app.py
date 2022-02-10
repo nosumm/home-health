@@ -27,6 +27,8 @@ class User(UserMixin, db.Model):
     DOB = db.Column(db.String(6), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     packets = db.relationship("Packet", backref='author', lazy='dynamic')
+    packet_count = db.Column(db.Integer, index=True, unique=False)
+    
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -36,7 +38,11 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-
+    
+    #def packet_count_init(self):
+       # self.packet_count = 0; # initialize packet count at 0 
+       # return packet_count_init(self.packet_count)
+    
 class Packet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(140))
@@ -65,6 +71,11 @@ def index():
 @app.shell_context_processor
 def make_shell_context():
     return {'db': db, 'User': User, 'Packet': Packet}
+
+# thingspeak communicate route ?
+@app.route("/update/API_key=<api_key>/mac=<mac>/field=<int:field>/data=<data>", methods=['GET'])
+def update(api_key, mac, field, data):
+    return render_template("update.html", data=data)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -98,7 +109,8 @@ def signup():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
-        user.set_DOB(form.DOB.data)
+        # user.packet_count = 0; # do we need packet count field in user table or can we access the length of the packets array?
+        #user.set_DOB(form.DOB.data) todo: verify DOB format
         db.session.add(user)
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
@@ -109,8 +121,30 @@ def signup():
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    packets = user.packets.all() 
+    
+    packets = user.packets.all()
+    packet_count = len(packets) # count packets every time user page loads
+    # TODO: 
+    # currently the process of creating a new packet below executes every time you refresh the user profile page
+    # todo: modify code to only create a new packet if we receive a new packet signal from thingspeak
+    # my initial thought is we will use the channels to differentiate users and the fields to differentiate test type?
+    
+    CHANNEL = 211204 # encodes the user ?
+    FIELD = 2 # encodes the test type? 
+    r = request.get_data('https://api.thingspeak.com/channels/CHANNEL/fields/FIELD/data/') # random example channel for testing (data = -1)
+    #r = 'new packet'
+    p = Packet(body=str(r)+str(packet_count), author=user) # create a new packet associated with user. body count = r and packet_count
+    #if user.packet_count == Null:
+        #user.packet_count = 0
+    #else:
+    #user.packet_count += 1 # 
+    
+    db.session.add(p)
+    db.session.commit()
+    db.session.close
+    
     return render_template('user.html', user=user, packets=packets)
+
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required

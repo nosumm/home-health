@@ -18,6 +18,11 @@ required installs:
         export FLASK_APP=website/app
         export FLASK_ENV=development
 
+Run:
+    flask shell
+to interact with the database. 
+In the flask shell run users = User.query.all() to see all users in the database.
+
 
 Next Steps: 
 
@@ -35,7 +40,7 @@ Next Steps:
         
         Packets will need:
 
-        - user id
+        - unique user id 
         - a time field to encode the time the test was taken
         - test type field to encode the test that was taken (EMG, heart rate etc)
 

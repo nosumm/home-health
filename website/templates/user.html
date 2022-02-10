@@ -5,5 +5,12 @@
     <hr>
     {% if user == current_user %}
     <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
+    </table>
+    <hr>
+    {% for packet in packets %}
+    <p>
+        {% include '_packet.html' %}
+    </p>
+    {% endfor %}
     {% endif %}
 {% endblock %}

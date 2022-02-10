@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.urls import url_parse
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 from config import Config
+from datetime import datetime
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -23,8 +24,9 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
-    DOB = db.Column(db.String(4), index=True, unique=True)
+    DOB = db.Column(db.String(6), index=True, unique=True)
     password_hash = db.Column(db.String(128))
+    packets = db.relationship("Packet", backref='author', lazy='dynamic')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -35,7 +37,14 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+class Packet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.String(140))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
+    def __repr__(self):
+        return '<Packet {}>'.format(self.body)
 
 @login.user_loader
 def load_user(id):
@@ -55,7 +64,7 @@ def index():
 
 @app.shell_context_processor
 def make_shell_context():
-    return {'db': db, 'User': User}
+    return {'db': db, 'User': User, 'Packet': Packet}
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -89,7 +98,7 @@ def signup():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
-        #user.set_DOB(form.DOB.data)
+        user.set_DOB(form.DOB.data)
         db.session.add(user)
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
@@ -100,7 +109,8 @@ def signup():
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    return render_template('user.html', user=user)
+    packets = user.packets.all() 
+    return render_template('user.html', user=user, packets=packets)
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required

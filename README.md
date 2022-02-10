@@ -32,14 +32,19 @@ Next Steps:
     current high level idea of the process: 
     
         1) The thingspeak database will send data to the sqlite user database. 
-        Each 'packet' of data sent (not sure how thingspeak will send the data) will represent the results of a single test. Every 'packet' will have a unique packet id and a user id. The user id encodes the user attached to the test. Note the user id field is unique to users but not to packets of data. 
+        Each 'packet' of data sent (not sure how thingspeak will send the data) will represent the results of a single test. 
+        Every 'packet' will have a unique packet id and a user id. The user id encodes the user attached to the test. 
+        Note the user id field is unique to users but not to packets of data. 
         Multiple packets will be using the same user id if a user has multiple packets attached to their account. 
         
-        2) The user database will use the user id on the recieved packet to link it to it's user 
+        2) Users are linked to packets in the database through the packet's user_id field. 
+        Every packet contains a user_id which will match the unqiue id of some user in the database. 
+
 
         3) Each user will have 0-MAXPACKETS number of packets, each containing their unique user id. 
         
-        (We are using MAXPACKETS because we will probably want to control how many tests a user can have saved at a time.) 
+        We are using MAXPACKETS because we will probably want to control how many tests a user can have saved at a time.
+        (A packet represents the results from a test.)
 
         The user database has a packet table that contains:
              - a unique packet id
@@ -47,9 +52,6 @@ Next Steps:
              - timestamp
              - user_id that links the packet to it's user
              - test_type represents the type of test taken.
-
-        Users are linked to packets in the database through the packet's user_id field. 
-        Every packet contains a user_id which will match the unqiue id of some user in the database. 
 
         more resources:
 

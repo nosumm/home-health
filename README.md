@@ -46,5 +46,8 @@ In the flask shell run users = User.query.all() to see all users in the database
 
 --> Next Steps: 
     
-    Configure the data transfer between the backend of our website and the thingspeak database.
-    Store the data we get from thingspeak in the body of a packet in the user database. 
+    - Configure the data transfer between the backend of our website and the thingspeak database.
+
+        - Once I figure out how to retrieve data from the thingspeak database, 
+        I will store the retrieved data in the body field of packets in the user database.
+        The website is already printing packet contents to user profile pages. 

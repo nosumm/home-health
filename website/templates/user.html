@@ -6,6 +6,7 @@
     {% if user == current_user %}
     <p><a href="{{ url_for('edit_profile') }}">Edit your profile</a></p>
     <p><a href="{{ url_for('newtest', username=current_user.username) }}">Create New Test</a></p>
+    <p><a href="{{ url_for('delete_all_tests', username=current_user.username) }}">delete all tests</a></p>
     </table>
     <hr>
     {% for packet in packets %}

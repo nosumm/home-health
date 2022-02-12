@@ -135,7 +135,20 @@ def newtest(username):
     new_packet(user) # call packet create helper function
     # render user page again with new packet added
     return render_template('user.html', user=user, packets=user.packets.all())
-    
+  
+@app.route('/deletetests/<username>')
+def delete_all_tests(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    delete_all_packets(user) # call helper
+    return render_template('user.html', user=user, packets=user.packets.all())  
+
+@app.route('/deletetest/<username>/<packet_id>')
+def deletetest(username, packet_id):
+    user = User.query.filter_by(username=username).first_or_404()
+    p = Packet.query.filter_by(id=packet_id).first_or_404()
+    db.session.delete(p)
+    db.session.commit()
+    return render_template('user.html', user=user, packets=user.packets.all())  
 
 @app.route('/user/<username>')
 @login_required
@@ -145,15 +158,24 @@ def user(username):
 
 
 # this function grabs data from a thingspeak channel
-# creates a new packet and insert data into the body
+# creates a new packet and inserts the data into the body field
 def new_packet(user):
-    # CHANNEL = user.id  # TODO
-    thingspeak_read = urllib.request.urlopen('https://thingspeak.com/channels/289288/fields/1/1') # just some random data on a random thingspeak channel for testing
+    thingspeak_read = urllib.request.urlopen('https://thingspeak.com/channels/289288/fields/1/1')
     thingspeak_data = thingspeak_read.read()
     body_contents = str(thingspeak_data) + "TEST#" + str(len(user.packets.all()))
     p = Packet(body=body_contents, author=user) # create a new packet associated with user with thingspeak data as the content of the body
     # add new packet to db
     db.session.add(p)
     db.session.commit()
+    
+# this function deletes all packets for the given user
+def delete_all_packets(user):
+    packets = user.packets.all() 
+    for p in packets:
+        # add new packet to db
+        db.session.delete(p)
+    db.session.commit()
+    
+    
 if __name__ == '__main__':
     app.run(debug=True)

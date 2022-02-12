@@ -2,6 +2,7 @@
         <tr valign="top">
             <td>User:{{ packet.author.username}}</td>
             <td>{{packet.timestamp}}</td>
+            <p><a href="{{ url_for('deletetest', username=current_user.username, packet_id=packet.id) }}">delete this test</a></p>
         </tr>
         
         <td>USER_ID:{{ packet.author.id}} USER_ID_ON_PACKET:<br>{{ packet.user_id}}</td>

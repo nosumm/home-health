@@ -36,5 +36,4 @@ class EditProfileForm(FlaskForm):
     DOB = StringField('DOB (MM/DD/YY)', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
-#class NewTest(FlaskForm):
     

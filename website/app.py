@@ -7,6 +7,9 @@ from werkzeug.urls import url_parse
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 from config import Config
 from datetime import datetime
+# add for thingspeak communication
+import urllib
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -126,15 +129,14 @@ def user(username):
     # todo: modify code to only create a new packet if we receive a new packet signal from thingspeak
     # my initial thought is we will use the channels to differentiate users and the fields to differentiate test type?
     
-    CHANNEL = 211204 # encodes the user ?
-    FIELD = 2 # encodes the test type? 
-    #r = request.get_data('https://api.thingspeak.com/channels/CHANNEL/fields/FIELD/data/') # random example channel for testing (data = -1)
-    r = 'packet'
-    p = Packet(body=str(r)+ str(packet_count), author=user) # create a new packet associated with user. body count = r and packet_count
-    #if user.packet_count == Null:
-        #user.packet_count = 0
-    #else:
-    #user.packet_count += 1 # 
+    #CHANNEL = 211204 users will have a unique channel number 
+    #FIELD = 2  field can encode the test type 
+    # channel for testing
+    # grabs
+    
+    thingspeak_read = urllib.request.urlopen('https://api.thingspeak.com/channels/289288/feeds.json?results=2') 
+    thingspeak_data = thingspeak_read.read()
+    p = Packet(body=str(thingspeak_data)+ "\n TEST#"+str(packet_count), author=user) # create a new packet associated with user. body count = r and packet_count
     
     db.session.add(p)
     db.session.commit()

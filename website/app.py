@@ -38,19 +38,22 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+                                   
+    def set_packet_count(self):
+        self.packet_count = len(user.packets.all())
     
-    #def packet_count_init(self):
-       # self.packet_count = 0; # initialize packet count at 0 
-       # return packet_count_init(self.packet_count)
     
 class Packet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.String(140))
+    body = db.Column(db.String(500))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __repr__(self):
+        self.id = id
+        self.user_id = User.id
         return '<Packet {}>'.format(self.body)
+    
 
 @login.user_loader
 def load_user(id):
@@ -71,11 +74,6 @@ def index():
 @app.shell_context_processor
 def make_shell_context():
     return {'db': db, 'User': User, 'Packet': Packet}
-
-# thingspeak communicate route ?
-@app.route("/update/API_key=<api_key>/mac=<mac>/field=<int:field>/data=<data>", methods=['GET'])
-def update(api_key, mac, field, data):
-    return render_template("update.html", data=data)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -109,41 +107,12 @@ def signup():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
-        # user.packet_count = 0; # do we need packet count field in user table or can we access the length of the packets array?
         #user.set_DOB(form.DOB.data) todo: verify DOB format
         db.session.add(user)
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('signup.html', title='Sign up', form=form)
-
-@app.route('/user/<username>')
-@login_required
-def user(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    
-    packets = user.packets.all()
-    packet_count = len(packets) # count packets every time user page loads
-    # TODO: 
-    # currently the process of creating a new packet below executes every time you refresh the user profile page
-    # todo: modify code to only create a new packet if we receive a new packet signal from thingspeak
-    # my initial thought is we will use the channels to differentiate users and the fields to differentiate test type?
-    
-    #CHANNEL = 211204 users will have a unique channel number 
-    #FIELD = 2  field can encode the test type 
-    # channel for testing
-    # grabs
-    
-    thingspeak_read = urllib.request.urlopen('https://api.thingspeak.com/channels/289288/feeds.json?results=2') 
-    thingspeak_data = thingspeak_read.read()
-    p = Packet(body=str(thingspeak_data)+ "\n TEST#"+str(packet_count), author=user) # create a new packet associated with user. body count = r and packet_count
-    
-    db.session.add(p)
-    db.session.commit()
-    db.session.close
-    
-    return render_template('user.html', user=user, packets=packets)
-
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -163,5 +132,25 @@ def edit_profile():
     return render_template('edit_profile.html', title='Edit Profile',
                            form=form)
 
+@app.route('/user/<username>')
+@login_required
+def user(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    new_packet(user)
+    return render_template('user.html', user=user, packets=user.packets.all())
+
+# this function grabs data from a thingspeak channel
+# creates a new packet and insert data into the body
+def new_packet(user):
+    # CHANNEL = user.id  # TODO  
+    packet_count = len(user.packets.all()) # count packets every time user page loads
+    thingspeak_read = urllib.request.urlopen('https://thingspeak.com/channels/289288/fields/1/1') # just some random data on a random thingspeak channel for testing
+    thingspeak_data = thingspeak_read.read()
+    body_contents = str(thingspeak_data)+ "TEST#"+str(packet_count)
+    p = Packet(body=body_contents, author=user) # create a new packet associated with user with thingspeak data as the content of the body
+    # add new packet to db
+    db.session.add(p)
+    db.session.commit()
+    db.session.close
 if __name__ == '__main__':
     app.run(debug=True)

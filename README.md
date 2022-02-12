@@ -38,12 +38,14 @@ In the flask shell run users = User.query.all() to see all users in the database
     Every packet contains a user_id field that will match the id of exactly one user in the database. 
     This is how we will display test data on the appropriate user's profile.
            
-    ->  Currently, a new packet will be created every time you refresh the profile page. This is temporary. Eventually we will only want to create a new packet when new test results are ready.
+->  You can create a new packet by clicking on the "Create New Test" link on the user profile page.
 
-    Every time you refresh the profile page a new chunk of text like this will be printed: 
+    Every time you create a packet a new chunk of text like this will be printed: 
 
     User:noahs 	2022-02-12 05:06:09.928424
     test data:
     b'{"channel":{"id":289288,"name":"postingdata","latitude":"0.0","longitude":"0.0","field1":"Field Label 1","field2":"Field Label 2","created_at":"2017-06-18T10:55:21Z","updated_at":"2018-07-18T08:25:10Z","last_entry_id":92},"feeds":[{"created_at":"2021-05-21T16:41:53Z","entry_id":91,"field1":"100","field2":null},{"created_at":"2021-11-10T03:41:41Z","entry_id":92,"field1":"100","field2":null}]}' TEST#0 
 
-    The packet/test number increases with every refresh. Packets do not reset when you logout. 
+    Packets do not reset when you logout. 
+    You can delete packets in the database through the flask shell. 
+    to do: implement a delete packet button on the website so users can delete test data they don't want anymore.

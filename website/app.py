@@ -38,10 +38,8 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-                                   
-    def set_packet_count(self):
-        self.packet_count = len(user.packets.all())
     
+                                      
     
 class Packet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -51,10 +49,9 @@ class Packet(db.Model):
 
     def __repr__(self):
         self.id = id
-        self.user_id = User.id
+        #self.user_id = User.id
         return '<Packet {}>'.format(self.body)
     
-
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
@@ -131,26 +128,32 @@ def edit_profile():
         form.DOB.data = current_user.DOB
     return render_template('edit_profile.html', title='Edit Profile',
                            form=form)
+    
+@app.route('/newtest/<username>')
+def newtest(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    new_packet(user) # call packet create helper function
+    # render user page again with new packet added
+    return render_template('user.html', user=user, packets=user.packets.all())
+    
 
 @app.route('/user/<username>')
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    new_packet(user)
-    return render_template('user.html', user=user, packets=user.packets.all())
+    return render_template('user.html', user=user, packets=user.packets.all()) 
+
 
 # this function grabs data from a thingspeak channel
 # creates a new packet and insert data into the body
 def new_packet(user):
-    # CHANNEL = user.id  # TODO  
-    packet_count = len(user.packets.all()) # count packets every time user page loads
+    # CHANNEL = user.id  # TODO
     thingspeak_read = urllib.request.urlopen('https://thingspeak.com/channels/289288/fields/1/1') # just some random data on a random thingspeak channel for testing
     thingspeak_data = thingspeak_read.read()
-    body_contents = str(thingspeak_data)+ "TEST#"+str(packet_count)
+    body_contents = str(thingspeak_data) + "TEST#" + str(len(user.packets.all()))
     p = Packet(body=body_contents, author=user) # create a new packet associated with user with thingspeak data as the content of the body
     # add new packet to db
     db.session.add(p)
     db.session.commit()
-    db.session.close
 if __name__ == '__main__':
     app.run(debug=True)

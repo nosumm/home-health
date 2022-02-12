@@ -17,9 +17,7 @@ migrate = Migrate(app, db)
 
 people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
 
-# classes 
-
-
+# classes - for user database
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
@@ -27,8 +25,7 @@ class User(UserMixin, db.Model):
     DOB = db.Column(db.String(6), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     packets = db.relationship("Packet", backref='author', lazy='dynamic')
-    packet_count = db.Column(db.Integer, index=True, unique=False)
-    
+    packet_count = db.Column(db.Integer, index=True, unique=False)   
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -131,9 +128,9 @@ def user(username):
     
     CHANNEL = 211204 # encodes the user ?
     FIELD = 2 # encodes the test type? 
-    r = request.get_data('https://api.thingspeak.com/channels/CHANNEL/fields/FIELD/data/') # random example channel for testing (data = -1)
-    #r = 'new packet'
-    p = Packet(body=str(r)+str(packet_count), author=user) # create a new packet associated with user. body count = r and packet_count
+    #r = request.get_data('https://api.thingspeak.com/channels/CHANNEL/fields/FIELD/data/') # random example channel for testing (data = -1)
+    r = 'packet'
+    p = Packet(body=str(r)+ str(packet_count), author=user) # create a new packet associated with user. body count = r and packet_count
     #if user.packet_count == Null:
         #user.packet_count = 0
     #else:

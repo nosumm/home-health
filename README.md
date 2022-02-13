@@ -46,6 +46,5 @@ In the flask shell run users = User.query.all() to see all users in the database
     test data:
     b'{"channel":{"id":289288,"name":"postingdata","latitude":"0.0","longitude":"0.0","field1":"Field Label 1","field2":"Field Label 2","created_at":"2017-06-18T10:55:21Z","updated_at":"2018-07-18T08:25:10Z","last_entry_id":92},"feeds":[{"created_at":"2021-05-21T16:41:53Z","entry_id":91,"field1":"100","field2":null},{"created_at":"2021-11-10T03:41:41Z","entry_id":92,"field1":"100","field2":null}]}' TEST#0 
 
-    Packets do not reset when you logout. 
-    You can delete packets in the database through the flask shell. 
-    to do: implement a delete packet button on the website so users can delete test data they don't want anymore.
+    Packets do not reset when you logout.
+   

@@ -18,7 +18,10 @@ login.login_view = 'login'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
+class people():
+    people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
+    def __repr__(self):
+        return 'People {}>'.format(self.people)
 
 # classes - for user database
 class User(UserMixin, db.Model):
@@ -28,7 +31,8 @@ class User(UserMixin, db.Model):
     DOB = db.Column(db.String(6), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     packets = db.relationship("Packet", backref='author', lazy='dynamic')
-    packet_count = db.Column(db.Integer, index=True, unique=False)   
+    packet_count = db.Column(db.Integer, index=True, unique=False)
+    #admin = db.Column(db.Integer, index=True, nullable=False)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -102,7 +106,7 @@ def signup():
         return redirect(url_for('index'))
     form = SignupForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
+        user = User(username=form.username.data, email=form.email.data, admin=false)
         user.set_password(form.password.data)
         #user.set_DOB(form.DOB.data) todo: verify DOB format
         db.session.add(user)
@@ -154,8 +158,17 @@ def deletetest(username, packet_id):
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
+    #if(user.admin == True):
+             
     return render_template('user.html', user=user, packets=user.packets.all()) 
 
+@app.route('/about')
+def about():
+    return render_template('about.html', people=people.people) 
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 # this function grabs data from a thingspeak channel
 # creates a new packet and inserts the data into the body field
@@ -175,7 +188,7 @@ def delete_all_packets(user):
         # add new packet to db
         db.session.delete(p)
     db.session.commit()
-    
-    
+      
 if __name__ == '__main__':
+    app.jinja_env.cache = {} # clear cache -> optimize page load time
     app.run(debug=True)

@@ -35,5 +35,3 @@ class EditProfileForm(FlaskForm):
     email = StringField('email', validators=[DataRequired()])
     DOB = StringField('DOB (MM/DD/YY)', validators=[DataRequired()])
     submit = SubmitField('Submit')
-
-    

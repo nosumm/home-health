@@ -6,7 +6,7 @@ before launching the website you must active the python3 environment (my_env):
 
 run: flask run -h localhost -p 8000 to launch the website on port 8000
 
-required installs:
+### required installs: ####
 
     pip install flask
     pip install -U Flask-SQLAlchemy
@@ -17,18 +17,21 @@ required installs:
     pip install python-dotenv
     pip install flask-wtf
 
- flask environment setup:
+ ### flask environment setup: ###
 
     These commands are in a .flaskenv file in the root directory:
 
-        export FLASK_APP=website/app
-        export FLASK_ENV=development
+        FLASK_APP=website/app
+        FLASK_ENV=developmentMAIL_SERVER=smtp.googlemail.com
+        MAIL_PORT=587
+        MAIL_USE_TLS=1
+        MAIL_USERNAME=<your-gmail-username>
+        MAIL_PASSWORD=<your-gmail-password>
 
 
 In the flask shell run: 'User.query.all()' to see all users in the database.
 
-
---> - completed:
+### Completed ###
 
     - set up sqlite database to store users and packets. 
         - Packets are linked to users through the user's id. Every user has a unique id. 
@@ -57,8 +60,8 @@ In the flask shell run: 'User.query.all()' to see all users in the database.
 
 Packets do not reset when you logout.
 
-
-solution to database connection error randomly encountered:
+### How to reset the migrations folder: ###
+This was the solution to a database connection error I randomly starting getting when I tried to run the db migrate, upgrade and downgrade commands.
 
     - delete migrations folder
     - flask db init - creates new migrations folder

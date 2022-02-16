@@ -4,12 +4,14 @@ from flask_migrate import Migrate
 from forms import LoginForm, SignupForm, EditProfileForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.urls import url_parse
-from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required, UserMixin
 from config import Config
 from datetime import datetime
 # add for thingspeak communication
 import urllib
 from bs4 import BeautifulSoup
+import re # for regex
+from flask_mail import Mail
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -17,24 +19,29 @@ login = LoginManager(app)
 login.login_view = 'login'
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+mail = Mail(app)
 
+# admin class
 class people():
     people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
     def __repr__(self):
         return 'People {}>'.format(self.people)
-
+    
 # classes - for user database
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(120), index=True, unique=True)
-    DOB = db.Column(db.String(6), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)  # email field format is validated
+    DOB = db.Column(db.String(6), index=True, unique=True)      # DOB field format is validated
     password_hash = db.Column(db.String(128))
     packets = db.relationship("Packet", backref='author', lazy='dynamic')
     packet_count = db.Column(db.Integer, index=True, unique=False)
-    #admin = db.Column(db.Integer, index=True, nullable=False)
+    admin = db.Column(db.Integer, index=True, unique=False)
 
     def __repr__(self):
+        self.id = id
+        self.admin = admin
+        self.admin = False
         return '<User {}>'.format(self.username)
     
     def set_password(self, password):
@@ -43,7 +50,24 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
     
-                                      
+    def validate_DOB(self, DOB):
+        try:
+            datetime.strptime(DOB, '%m-%d-%Y')
+        except ValueError:
+            raise ValueError("oops, we want your DOB in a specific format. Please try again.")
+    
+    def validate_email(self, email):
+        # regular expression for validating an Email
+        regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        if(re.fullmatch(regex, email)):
+            pass
+        else:
+            raise ValueError("oops, please enter a valid email")
+        
+            
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))                                 
     
 class Packet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -53,18 +77,11 @@ class Packet(db.Model):
 
     def __repr__(self):
         self.id = id
-        #self.user_id = User.id
+        self.user_id = User.id
         return '<Packet {}>'.format(self.body)
-    
-@login.user_loader
-def load_user(id):
-    return User.query.get(int(id))
+
 
 # ROUTES
-
-#@app.route("/")
-#def index():
-#    return render_template('index.html')
 
 @app.route("/")
 @app.route('/index')
@@ -75,7 +92,6 @@ def index():
 @app.shell_context_processor
 def make_shell_context():
     return {'db': db, 'User': User, 'Packet': Packet}
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -99,21 +115,28 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     form = SignupForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data, admin=false)
+        user = User(username=form.username.data, email=form.email.data, admin=False)
         user.set_password(form.password.data)
-        #user.set_DOB(form.DOB.data) todo: verify DOB format
+        user.validate_DOB(form.DOB.data)
+        user.validate_email(form.email.data) 
         db.session.add(user)
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('signup.html', title='Sign up', form=form)
+
+@app.route('/user/<username>')
+@login_required
+def user(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    #if(user.admin == True):         
+    return render_template('user.html', user=user, packets=user.packets.all()) 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
@@ -123,6 +146,8 @@ def edit_profile():
         current_user.username = form.username.data
         current_user.email = form.email.data
         current_user.DOB = form.DOB.data
+        current_user.validate_DOB(form.DOB.data)
+        current_user.validate_email(form.email.data) 
         db.session.commit()
         flash('Your changes have been saved.')
         return redirect(url_for('edit_profile'))
@@ -154,21 +179,10 @@ def deletetest(username, packet_id):
     db.session.commit()
     return render_template('user.html', user=user, packets=user.packets.all())  
 
-@app.route('/user/<username>')
-@login_required
-def user(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    #if(user.admin == True):
-             
-    return render_template('user.html', user=user, packets=user.packets.all()) 
-
 @app.route('/about')
 def about():
     return render_template('about.html', people=people.people) 
 
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
 
 # this function grabs data from a thingspeak channel
 # creates a new packet and inserts the data into the body field
@@ -188,7 +202,27 @@ def delete_all_packets(user):
         # add new packet to db
         db.session.delete(p)
     db.session.commit()
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
+    
+    
+# admin functions
+
+#@app.route('/admin/<username>')
+#def view_users(username):
+#    user = User.query.filter_by(username=username).first_or_404() # grab admin user
+    # todo - validate admin
+    # render user page again with new packet added
+#    return render_template('view_users.html')
       
 if __name__ == '__main__':
     app.jinja_env.cache = {} # clear cache -> optimize page load time
     app.run(debug=True)
+    
+    

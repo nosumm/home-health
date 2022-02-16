@@ -15,7 +15,7 @@ class SignupForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     password2 = PasswordField(
         'Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    DOB = StringField('DOB (MM/DD/YY)', validators=[DataRequired()])
+    DOB = StringField('DOB (MM-DD-YYYY)', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign Up')
@@ -33,5 +33,5 @@ class SignupForm(FlaskForm):
 class EditProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('email', validators=[DataRequired()])
-    DOB = StringField('DOB (MM/DD/YY)', validators=[DataRequired()])
+    DOB = StringField('DOB (MM-DD-YYYY)', validators=[DataRequired()])
     submit = SubmitField('Submit')

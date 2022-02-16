@@ -2,7 +2,7 @@
 
 before launching the website you must active the python3 environment (my_env):
     
-    source my_env/bin/activate
+    source my_env/bin/activate in Linux or my_env\Scripts\activate in Windows
 
 run: flask run -h localhost -p 8000 to launch the website on port 8000
 
@@ -14,6 +14,8 @@ required installs:
     pip install flask-login
     pip install bs4 
     pip install flask_mail
+    pip install python-dotenv
+    pip install flask-wtf
 
  flask environment setup:
 

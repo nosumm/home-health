@@ -5,6 +5,7 @@ from forms import LoginForm, SignupForm, EditProfileForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.urls import url_parse
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required, UserMixin
+from wtforms.validators import ValidationError
 from config import Config
 from datetime import datetime
 # add for thingspeak communication
@@ -54,7 +55,7 @@ class User(UserMixin, db.Model):
         try:
             datetime.strptime(DOB, '%m-%d-%Y')
         except ValueError:
-            raise ValueError("oops, we want your DOB in a specific format. Please try again.")
+            raise ValidationError("oops, we want your DOB in a specific format. Please try again.")
     
     def validate_email(self, email):
         # regular expression for validating an Email
@@ -62,7 +63,7 @@ class User(UserMixin, db.Model):
         if(re.fullmatch(regex, email)):
             pass
         else:
-            raise ValueError("oops, please enter a valid email")
+            raise ValidationError("oops, please enter a valid email")
         
             
 @login.user_loader
@@ -202,6 +203,12 @@ def delete_all_packets(user):
         # add new packet to db
         db.session.delete(p)
     db.session.commit()
+
+@app.route('/open_packet/<username>/<packet_id>')
+def open_packet(username, packet_id):
+    user = User.query.filter_by(username=username).first_or_404()
+    #pack = Packet.query.filter_by(id=packet_id).first_or_404()
+    return render_template('view_test.html', user=user, packet=Packet.query.get(packet_id))
 
 @app.errorhandler(404)
 def page_not_found(e):

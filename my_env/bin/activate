@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/homes/iws/nstave/cse475/home-health-system/my_env"
+VIRTUAL_ENV="/homes/iws/nstave/cse475/home-health/my_env"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

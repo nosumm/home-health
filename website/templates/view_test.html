@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1> Results for Test{{packet.id}}</h1>
+<p><a href="{{ url_for('deletetest', username=current_user.username, packet_id=packet.id) }}">delete test {{packet.id}}</a>
+<a href="{{ url_for('user', username=current_user.username)}}">back to all tests</a></p>
+<p><td>User: {{packet.author.username}}  | Timestamp: {{packet.timestamp}}</td></p>
+
+<table>
+
+    <td> test data:<br>{{ packet.body }} </td>
+    
+</table>
+{% endblock %}

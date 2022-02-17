@@ -1,18 +1,18 @@
 {% extends 'base.html' %}
 {% block content %}
 </div>
-<div class="col-md-4">
+<div class="col-md-6">
   <div class="content-section">
-    <h1>Sidebar</h1>
+    
     <p class='text-muted'>Additional information can be found here
       <ul class="list-group">
-        <li class="list-group-item list-group-item-light">Hardware Team: Shujian Lao, Will J Lee, Christin Lin Mino Song</li>
-        <li class="list-group-item list-group-item-light">Software Team: Noah S Staveley, Samuel Awuah, Mino Song</li>
-        <li class="list-group-item list-group-item-light"><a class="navbar-brand" href="https://github.com/noahstaveley/home-health">Github</a></li>
-        <li class="list-group-item list-group-item-light">Next Steps: Integrate with the hardware team. Transfer actual EMG and pulse rate sensor data from the Raspberry Pi to Thingspeak channel
-            Hardware team handles transfer of sensor data from STM to the Raspberry Pi through UART 
+        <li class="list-group-item list-group-item-light"><a class="navbar-brand" href="{{ url_for('introduction') }}">Project Introduction</a></li>
+        <li class="list-group-item list-group-item-light"><a class="navbar-brand" href="{{ url_for('hardware') }}">Hardware Team Members</a></li>
+        <li class="list-group-item list-group-item-light"><a class="navbar-brand" href="{{ url_for('software') }}">Software Team Members</a></li>
+        <li class="list-group-item list-group-item-light"><a class="navbar-brand" href="https://github.com/noahstaveley/home-health">Project Repository</a></li>
+        <li class="list-group-item list-group-item-light"><a class="navbar-brand" href="{{ url_for('progress') }}">Progress Update</a></li>
             </li>
-        <li class="list-group-item list-group-item-light"><a href="mailto:noahstaveley@gmail.com?Subject=Hello%20-from-home-health-website"target="_top"> Email Us</a></li>
+        <li class="list-group-item list-group-item-light"><a class="navbar-brand" href="mailto:noahstaveley@gmail.com?Subject=Hello%20-from-home-health-website"target="_top"> Email Us</a></li>
 
       </ul>
     </p>

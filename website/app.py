@@ -214,12 +214,10 @@ def new_packet(user):
     bytes_csv = thingspeak_read.read()
     data=str(bytes_csv,'utf-8')
     thingspeak_data = pd.read_csv(StringIO(data))
-  
     body_raw = pd.DataFrame(thingspeak_data)
-    body = body_raw.tail(1)
-    body_contents = str(body) + "TEST#" + str(len(user.packets.all()))
+    body_contents = thingspeak_data.iloc[-1] # isolates most recent row (bottom row)
     # create a new packet associated with user with thingspeak data as the content of the body
-    p = Packet(body=body_contents, author=user, test_type='todo: grab test type field')
+    p = Packet(body=str(body_contents), author=user, test_type=str(body_contents['field2'])) # field2 = test_type
     # add new packet to db
     db.session.add(p)
     db.session.commit()

@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-# from forms import LoginForm, SignupForm, EditProfileForm
+from forms import LoginForm, SignupForm, EditProfileForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.urls import url_parse
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required, UserMixin
@@ -25,12 +25,13 @@ import pandas as pd
 from pandas import DataFrame
 from io import StringIO
 
+"""
 from ast import Pass
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length
-# import app
-
+import app
+"""
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -106,7 +107,7 @@ class Packet(db.Model):
         self.id = id
         self.user_id = User.id
         return '<Packet {}>'.format(self.body)
-
+"""
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -139,7 +140,7 @@ class EditProfileForm(FlaskForm):
     email = StringField('email', validators=[DataRequired()])
     DOB = StringField('DOB (MM-DD-YYYY)', validators=[DataRequired()])
     submit = SubmitField('Submit')
-
+"""
 # APP ROUTES
 
 @app.route("/")

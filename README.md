@@ -16,6 +16,8 @@ run: flask run -h localhost -p 8000 to launch the website on port 8000
     pip install flask_mail
     pip install python-dotenv
     pip install flask-wtf
+    pip install pandas
+    pip install numpy
 
  ### flask environment setup: ###
 
@@ -29,7 +31,15 @@ run: flask run -h localhost -p 8000 to launch the website on port 8000
         MAIL_PASSWORD=<your-gmail-password>
 
 
-In the flask shell run: 'User.query.all()' to see all users in the database.
+### some database commands: ###
+
+    - User.query.all() returns all users in the database.
+    - user = User.query.get(user_id) saves the user with given user_id in user
+    - user.packets.all() returns all packets assigned to the user
+    - Packet.query.get(packet_id) returns packet with given packet_id
+    - db.session.add(to_add)
+    - db.session.delete(to_delete)
+    - db.session.commit() 
 
 ### Completed ###
 
@@ -52,11 +62,8 @@ In the flask shell run: 'User.query.all()' to see all users in the database.
            
 ->  You can create a new packet by clicking on the "Create New Test" link on the user profile page.
 
-    Every time you create a packet a new chunk of text like this will be printed: 
+    Every time you create a packet a new chunk of text will be printed.
 
-    User:noahs 	2022-02-12 05:06:09.928424
-    test data:
-    b'{"channel":{"id":289288,"name":"postingdata","latitude":"0.0","longitude":"0.0","field1":"Field Label 1","field2":"Field Label 2","created_at":"2017-06-18T10:55:21Z","updated_at":"2018-07-18T08:25:10Z","last_entry_id":92},"feeds":[{"created_at":"2021-05-21T16:41:53Z","entry_id":91,"field1":"100","field2":null},{"created_at":"2021-11-10T03:41:41Z","entry_id":92,"field1":"100","field2":null}]}' TEST#0 
 
 Packets do not reset when you logout.
 

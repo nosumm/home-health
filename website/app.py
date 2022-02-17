@@ -14,6 +14,17 @@ from bs4 import BeautifulSoup
 import re # for regex
 from flask_mail import Mail
 
+
+import random
+import numpy as np
+from datetime import datetime
+import time
+import json
+import csv
+import pandas as pd
+from pandas import DataFrame
+from io import StringIO
+
 app = Flask(__name__)
 app.config.from_object(Config)
 login = LoginManager(app)
@@ -22,9 +33,10 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
 
-# admin class
+# admin class to store admin users 
 class people():
     people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
+    usernames = ['sam_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', 'a1']
     def __repr__(self):
         return 'People {}>'.format(self.people)
     
@@ -32,17 +44,15 @@ class people():
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(120), index=True, unique=True)  # email field format is validated
-    DOB = db.Column(db.String(6), index=True, unique=True)      # DOB field format is validated
+    email = db.Column(db.String(120), index=True, unique=True)      # email field format is validated
+    DOB = db.Column(db.String(6), index=True, unique=True)          # DOB field format is validated
     password_hash = db.Column(db.String(128))
     packets = db.relationship("Packet", backref='author', lazy='dynamic')
     packet_count = db.Column(db.Integer, index=True, unique=False)
-    admin = db.Column(db.Integer, index=True, unique=False)
+    admin = db.Column(db.Integer, index=True, default=False)
 
     def __repr__(self):
         self.id = id
-        self.admin = admin
-        self.admin = False
         return '<User {}>'.format(self.username)
     
     def set_password(self, password):
@@ -65,6 +75,14 @@ class User(UserMixin, db.Model):
         else:
             raise ValidationError("oops, please enter a valid email")
         
+    def set_admin(self, username):
+        user = User.query.filter_by(username=username).first()
+        try: 
+            people.usernames.index(username)
+            self.admin = True
+        except ValueError:
+            self.admin = False
+        
             
 @login.user_loader
 def load_user(id):
@@ -75,6 +93,7 @@ class Packet(db.Model):
     body = db.Column(db.String(500))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    test_type = db.Column(db.String(40))
 
     def __repr__(self):
         self.id = id
@@ -82,7 +101,7 @@ class Packet(db.Model):
         return '<Packet {}>'.format(self.body)
 
 
-# ROUTES
+# APP ROUTES
 
 @app.route("/")
 @app.route('/index')
@@ -122,21 +141,24 @@ def signup():
         return redirect(url_for('index'))
     form = SignupForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data, admin=False)
+        user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
         user.validate_DOB(form.DOB.data)
-        user.validate_email(form.email.data) 
+        user.validate_email(form.email.data)
+        user.set_admin(form.username.data)
         db.session.add(user)
         db.session.commit()
-        flash('Congratulations, you are now a registered user!')
+        MESSAGE = 'Congratulations ' + user.username + ' you are now a registered user!'
+        flash(MESSAGE)
+        if user.admin == True:
+            flash('This is an admin account')
         return redirect(url_for('login'))
     return render_template('signup.html', title='Sign up', form=form)
 
 @app.route('/user/<username>')
 @login_required
 def user(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    #if(user.admin == True):         
+    user = User.query.filter_by(username=username).first_or_404()        
     return render_template('user.html', user=user, packets=user.packets.all()) 
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
@@ -188,10 +210,16 @@ def about():
 # this function grabs data from a thingspeak channel
 # creates a new packet and inserts the data into the body field
 def new_packet(user):
-    thingspeak_read = urllib.request.urlopen('https://thingspeak.com/channels/289288/fields/1/1')
-    thingspeak_data = thingspeak_read.read()
-    body_contents = str(thingspeak_data) + "TEST#" + str(len(user.packets.all()))
-    p = Packet(body=body_contents, author=user) # create a new packet associated with user with thingspeak data as the content of the body
+    thingspeak_read = urllib.request.urlopen('https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33')
+    bytes_csv = thingspeak_read.read()
+    data=str(bytes_csv,'utf-8')
+    thingspeak_data = pd.read_csv(StringIO(data))
+  
+    body_raw = pd.DataFrame(thingspeak_data)
+    body = body_raw.tail(1)
+    body_contents = str(body) + "TEST#" + str(len(user.packets.all()))
+    # create a new packet associated with user with thingspeak data as the content of the body
+    p = Packet(body=body_contents, author=user, test_type='todo: grab test type field')
     # add new packet to db
     db.session.add(p)
     db.session.commit()
@@ -221,12 +249,6 @@ def internal_error(error):
     
 # admin functions
 
-#@app.route('/admin/<username>')
-#def view_users(username):
-#    user = User.query.filter_by(username=username).first_or_404() # grab admin user
-    # todo - validate admin
-    # render user page again with new packet added
-#    return render_template('view_users.html')
       
 if __name__ == '__main__':
     app.jinja_env.cache = {} # clear cache -> optimize page load time

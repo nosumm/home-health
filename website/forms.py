@@ -19,6 +19,7 @@ class SignupForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign Up')
+    admin_code = StringField('Admin Code (optional)') #, validators=[EqualTo(people.admin_code)])
     
     def validate_username(self, username):
         user = app.User.query.filter_by(username=username.data).first()

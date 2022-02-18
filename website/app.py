@@ -36,7 +36,7 @@ mail = Mail(app)
 # admin class to store admin users 
 class people():
     people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
-    usernames = ['sam_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', 'admin']
+    usernames = ['samuel_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', '_admin_']
     def __repr__(self):
         return 'People {}>'.format(self.people)
     
@@ -74,12 +74,15 @@ class User(UserMixin, db.Model):
             pass
         else:
             raise ValidationError("oops, please enter a valid email")
-        
+    
     def set_admin(self, username):
         user = User.query.filter_by(username=username).first()
         try: 
             people.usernames.index(username)
-            self.admin = True
+            if SignupForm.admin_code == people.usernames:
+                self.admin = True
+            else:
+                self.admin = False
         except ValueError:
             self.admin = False
 
@@ -266,7 +269,7 @@ def internal_error(error):
     return render_template('500.html'), 500
     
     
-# admin functions
+# admin functions - todo 
 
       
 if __name__ == '__main__':

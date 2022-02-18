@@ -40,33 +40,7 @@ run: flask run -h localhost -p 8000 to launch the website on port 8000
     - db.session.add(to_add)
     - db.session.delete(to_delete)
     - db.session.commit() 
-
-### Completed ###
-
-    - set up sqlite database to store users and packets. 
-        - Packets are linked to users through the user's id. Every user has a unique id. 
-        Every packet contains a user_id field that will match the id of exactly one user in the database. 
-
-    - Configured data transfer between the backend of our website and the thingspeak database. 
-        
-    - Created profile pages for users
-        - Created edit profile functionality. Users can edit their profile fields (username, email, DOB, etc).
-        - Implemented grab test data button. displays a packet of data containing test results from thingspeak 
-        - Implemented delete test buttons
-
-    extra website features completed:
-
-    - Implemented email us redirect on about page 
-    - email and DOB validation (used on edit profile and sign up pages)
     
-           
-->  You can create a new packet by clicking on the "Create New Test" link on the user profile page.
-
-    Every time you create a packet a new chunk of text will be printed.
-
-
-Packets do not reset when you logout.
-
 ### How to reset the migrations folder: ###
 This was the solution to a database connection error I randomly starting getting when I tried to run the db migrate, upgrade and downgrade commands.
 

@@ -1,13 +1,9 @@
 <table>
         <tr valign="top">
-            <td>User:{{ packet.author.username}}</td>
-            <td>{{packet.timestamp}}</td>
+            <td>User:{{ packet.author.username}}<br>Test Data Ordered: {{packet.timestamp}}</td>
             <p><a href="{{ url_for('deletetest', username=current_user.username, packet_id=packet.id) }}">delete test {{packet.id}}</a></p>
             <p><a href="{{ url_for('open_packet', username=current_user.username, packet_id=packet.id) }}">view entire contents</a></p>
-
         </tr>
-           
-
         <td> test type:<br>{{ packet.test_type }} </td>
         
     </table>

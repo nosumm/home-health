@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1> Charts for: {{user.username}}</h1>
+<a href="{{ url_for('user', username=current_user.username)}}">back to all tests</a></p>
+<p><td>User: {{user.username}}</td></p>
+
+<table>
+
+    <td> todo: put thingspeak visualizations here </td>
+    <td> test:  </td>
+    
+</table>
+{% endblock %}

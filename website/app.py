@@ -25,14 +25,6 @@ import pandas as pd
 from pandas import DataFrame
 from io import StringIO
 
-"""
-from ast import Pass
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
-from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length
-import app
-"""
-
 app = Flask(__name__)
 app.config.from_object(Config)
 login = LoginManager(app)
@@ -44,7 +36,7 @@ mail = Mail(app)
 # admin class to store admin users 
 class people():
     people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
-    usernames = ['sam_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', 'a1']
+    usernames = ['sam_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', 'admin']
     def __repr__(self):
         return 'People {}>'.format(self.people)
     
@@ -90,57 +82,24 @@ class User(UserMixin, db.Model):
             self.admin = True
         except ValueError:
             self.admin = False
-        
-            
-@login.user_loader
-def load_user(id):
-    return User.query.get(int(id))                                 
-    
+
 class Packet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(500))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow) # this timestamp represents when the test was ordered
+    test_taken = db.Column(db.DateTime, index=True)                         # this timestamp represents when the test was taken
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     test_type = db.Column(db.String(40))
 
     def __repr__(self):
         self.id = id
         self.user_id = User.id
-        return '<Packet {}>'.format(self.body)
-"""
-class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
-    submit = SubmitField('Sign In')
+        return '<Packet {}>'.format(self.body)   
+            
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))                                 
     
-class SignupForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    password2 = PasswordField(
-        'Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    DOB = StringField('DOB (MM-DD-YYYY)', validators=[DataRequired()])
-    email = StringField('Email', validators=[DataRequired()])
-    remember_me = BooleanField('Remember Me')
-    submit = SubmitField('Sign Up')
-    
-    def validate_username(self, username):
-        user = app.User.query.filter_by(username=username.data).first()
-        if user is not None:
-            raise ValidationError('Please use a different username.')
-
-    def validate_email(self, email):
-        user = app.User.query.filter_by(email=email.data).first()
-        if user is not None:
-            raise ValidationError('Please use a different email address.')
-        
-        
-class EditProfileForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    email = StringField('email', validators=[DataRequired()])
-    DOB = StringField('DOB (MM-DD-YYYY)', validators=[DataRequired()])
-    submit = SubmitField('Submit')
-"""
 # APP ROUTES
 
 @app.route("/")
@@ -272,8 +231,8 @@ def new_packet(user):
     thingspeak_data = pd.read_csv(StringIO(data))
     body_raw = pd.DataFrame(thingspeak_data)
     body_contents = thingspeak_data.iloc[-1] # isolates most recent row (bottom row)
-    # create a new packet associated with user with thingspeak data as the content of the body
-    p = Packet(body=str(body_contents), author=user, test_type=str(body_contents['field2'])) # field2 = test_type
+    # create a new packet associated for user 
+    p = Packet(body='field3: '+str(body_contents['field3'])+ '| field5: ' +str(body_contents['field5']), author=user, test_type=str(body_contents['field2'])) # field2 = test_type
     # add new packet to db
     db.session.add(p)
     db.session.commit()
@@ -291,6 +250,12 @@ def open_packet(username, packet_id):
     user = User.query.filter_by(username=username).first_or_404()
     #pack = Packet.query.filter_by(id=packet_id).first_or_404()
     return render_template('view_test.html', user=user, packet=Packet.query.get(packet_id))
+
+@app.route('/open_packet/<username>/test_chart')
+def test_chart(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    #pack = Packet.query.filter_by(id=packet_id).first_or_404()
+    return render_template('test_chart.html', user=user)
 
 @app.errorhandler(404)
 def page_not_found(e):

@@ -6,31 +6,6 @@ before launching the website you must active the python3 environment (my_env):
 
 run: flask run -h localhost -p 8000 to launch the website on port 8000
 
-### required installs: ####
-
-    pip install flask
-    pip install -U Flask-SQLAlchemy
-    pip install flask-migrate
-    pip install flask-login
-    pip install bs4 
-    pip install flask_mail
-    pip install python-dotenv
-    pip install flask-wtf
-    pip install pandas
-    pip install numpy
-
- ### flask environment setup: ###
-
-    These commands are in a .flaskenv file in the root directory:
-
-        FLASK_APP=website/app
-        FLASK_ENV=developmentMAIL_SERVER=smtp.googlemail.com
-        MAIL_PORT=587
-        MAIL_USE_TLS=1
-        MAIL_USERNAME=<your-gmail-username>
-        MAIL_PASSWORD=<your-gmail-password>
-
-
 ### some database commands: ###
 
     - User.query.all() returns all users in the database.

@@ -1,0 +1,13 @@
+required installs:
+
+pip install flask
+pip install -U Flask-SQLAlchemy
+pip install flask-migrate
+pip install flask-login
+pip install bs4 
+pip install flask_mail
+pip install python-dotenv
+pip install flask-wtf
+pip install pandas
+pip install numpy
+

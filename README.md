@@ -47,5 +47,8 @@ This was the solution to a database connection error I randomly starting getting
     - delete migrations folder
     - flask db init - creates new migrations folder
     - flask db revision - creates initial revision
-        - go into the generated .py file and replace revision identifier if necessary 
+    - try to run flask db migrate
+        - you will probably get an error like this:
+        Error: Can't locate revision identified by '<some_id>'
+        - go into the generated .py file in migrations/versions/__pycache__ and replace revision id with the id from error message
     - flask db migrate and flask db upgrade now work properly 

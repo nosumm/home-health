@@ -40,12 +40,12 @@ class people():
     def __repr__(self):
         return 'People {}>'.format(self.people)
     
-# classes - for user database
+# User class for db
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(120), index=True, unique=True)      # email field format is validated
-    DOB = db.Column(db.String(6), index=True, unique=True)          # DOB field format is validated
+    email = db.Column(db.String(120), index=True, unique=True)          # email field format is validated
+    DOB = db.Column(db.String(6), index=True, unique=True)              # DOB field format is validated
     password_hash = db.Column(db.String(128))
     packets = db.relationship("Packet", backref='author', lazy='dynamic')
     packet_count = db.Column(db.Integer, index=True, unique=False)
@@ -86,35 +86,48 @@ class User(UserMixin, db.Model):
         except ValueError:
             self.admin = False
 
+# packet class for db
 class Packet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(500))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow) # this timestamp represents when the test was ordered
-    test_taken = db.Column(db.DateTime, index=True)                         # this timestamp represents when the test was taken
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)     # this timestamp represents when the test was ordered
+    test_taken = db.Column(db.String(50), index=True, default=None)               # this timestamp represents when the test was taken
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    test_type = db.Column(db.String(40))
+    test_type = db.Column(db.String(150), default=None)
 
     def __repr__(self):
         self.id = id
         self.user_id = User.id
         return '<Packet {}>'.format(self.body)   
-            
-@login.user_loader
-def load_user(id):
-    return User.query.get(int(id))                                 
+                                        
     
 # APP ROUTES
 
+# this route loads the user with the given id
+@login.user_loader
+def load_user(id):
+    return User.query.get(int(id))     
+
+# this app route loads the home page 
+# you must log in to view the home page 
+# right now the home page simply displays a custom greeting for the user
 @app.route("/")
 @app.route('/index')
 @login_required
 def index():
     return render_template("index_login.html", title='Home Page')
 
+# home page for guests (not logged in)
+@app.route("/")
+@app.route('/index_guest')
+def index_guest():
+    return render_template("index_guest.html", title='Home Page')
+
 @app.shell_context_processor
 def make_shell_context():
     return {'db': db, 'User': User, 'Packet': Packet}
 
+# route for log in page
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -132,11 +145,14 @@ def login():
         return redirect(next_page)
     return render_template('login.html', title='Log In', form=form)
 
+# log out route 
 @app.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
+
+# route for sign up page --> creates new user in database 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if current_user.is_authenticated:
@@ -157,12 +173,14 @@ def signup():
         return redirect(url_for('login'))
     return render_template('signup.html', title='Sign up', form=form)
 
+# this route renders the user profile page 
 @app.route('/user/<username>')
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()        
     return render_template('user.html', user=user, packets=user.packets.all()) 
 
+# route for edit profile form 
 @app.route('/edit_profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
@@ -182,20 +200,23 @@ def edit_profile():
         form.DOB.data = current_user.DOB
     return render_template('edit_profile.html', title='Edit Profile',
                            form=form)
-    
+
+# route for the grab new test data button on user profile page    
 @app.route('/newtest/<username>')
 def newtest(username):
     user = User.query.filter_by(username=username).first_or_404()
     new_packet(user) # call packet create helper function
     # render user page again with new packet added
     return render_template('user.html', user=user, packets=user.packets.all())
-  
+
+# route for delete all tests button  
 @app.route('/deletetests/<username>')
 def delete_all_tests(username):
     user = User.query.filter_by(username=username).first_or_404()
-    delete_all_packets(user) # call helper
-    return render_template('user.html', user=user, packets=user.packets.all())  
-
+    delete_all_packets(user) # call helper function
+    return render_template('user.html', user=user, packets=user.packets.all()) 
+ 
+# route for delete this test button
 @app.route('/deletetest/<username>/<packet_id>')
 def deletetest(username, packet_id):
     user = User.query.filter_by(username=username).first_or_404()
@@ -204,6 +225,55 @@ def deletetest(username, packet_id):
     db.session.commit()
     return render_template('user.html', user=user, packets=user.packets.all())  
 
+
+# this function grabs data from a thingspeak channel
+# creates a new packet and inserts the data into the body field
+def new_packet(user):
+    thingspeak_read = urllib.request.urlopen('https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33')
+    bytes_csv = thingspeak_read.read()
+    data=str(bytes_csv,'utf-8')
+    thingspeak_data = pd.read_csv(StringIO(data))
+    body_raw = pd.DataFrame(thingspeak_data)
+    body_contents = thingspeak_data.iloc[-1] # isolates most recent row (bottom row)
+    # create a new packet associated for user 
+    p = Packet(body=str(body_contents['field3']), author=user, test_type=str(body_contents['field2']), test_taken= "Date: "+ str(body_contents['field4'])+" Time: "+str(body_contents['field5'])) # field2 = test_type
+    # add new packet to db
+    db.session.add(p)
+    db.session.commit()
+    
+# this function deletes all packets for the given user
+def delete_all_packets(user):
+    packets = user.packets.all() 
+    for p in packets:
+        # add new packet to db
+        db.session.delete(p)
+    db.session.commit()
+
+# route for view entire test result 
+@app.route('/open_packet/<username>/<packet_id>')
+def open_packet(username, packet_id):
+    user = User.query.filter_by(username=username).first_or_404()
+    #pack = Packet.query.filter_by(id=packet_id).first_or_404()
+    return render_template('view_test.html', user=user, packet=Packet.query.get(packet_id))
+
+# route for test visualization/chart page
+@app.route('/open_packet/<username>/test_chart')
+def test_chart(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    #pack = Packet.query.filter_by(id=packet_id).first_or_404()
+    return render_template('test_chart.html', user=user)
+
+
+# todo: routes for error handling
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
+
+# routes for about page
 @app.route('/about')
 def about():
     return render_template('about.html', people=people.people)
@@ -223,51 +293,7 @@ def introduction():
 @app.route('/progress')
 def progress():
     return render_template('progress.html', people=people.people)
-
-
-# this function grabs data from a thingspeak channel
-# creates a new packet and inserts the data into the body field
-def new_packet(user):
-    thingspeak_read = urllib.request.urlopen('https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33')
-    bytes_csv = thingspeak_read.read()
-    data=str(bytes_csv,'utf-8')
-    thingspeak_data = pd.read_csv(StringIO(data))
-    body_raw = pd.DataFrame(thingspeak_data)
-    body_contents = thingspeak_data.iloc[-1] # isolates most recent row (bottom row)
-    # create a new packet associated for user 
-    p = Packet(body='field3: '+str(body_contents['field3'])+ '| field5: ' +str(body_contents['field5']), author=user, test_type=str(body_contents['field2'])) # field2 = test_type
-    # add new packet to db
-    db.session.add(p)
-    db.session.commit()
-    
-# this function deletes all packets for the given user
-def delete_all_packets(user):
-    packets = user.packets.all() 
-    for p in packets:
-        # add new packet to db
-        db.session.delete(p)
-    db.session.commit()
-
-@app.route('/open_packet/<username>/<packet_id>')
-def open_packet(username, packet_id):
-    user = User.query.filter_by(username=username).first_or_404()
-    #pack = Packet.query.filter_by(id=packet_id).first_or_404()
-    return render_template('view_test.html', user=user, packet=Packet.query.get(packet_id))
-
-@app.route('/open_packet/<username>/test_chart')
-def test_chart(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    #pack = Packet.query.filter_by(id=packet_id).first_or_404()
-    return render_template('test_chart.html', user=user)
-
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    return render_template('500.html'), 500
-    
+## end about page routes
     
 # admin functions - todo 
 

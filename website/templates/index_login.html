@@ -2,7 +2,6 @@
 
 {% block content %}
     <h1>Hi, {{ current_user.username }}!</h1>
-    {% for packet in packets %}
-    <div><p>{{ packet.author.username }} says: <b>{{ packet.body }}</b></p></div>
-    {% endfor %}
+  
+    <div><p> This is the {{current_user.username}}'s Home Page. Not sure what we want to put here. </p></div>
 {% endblock %}

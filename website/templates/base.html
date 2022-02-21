@@ -22,7 +22,11 @@
           </button>
           <div class="collapse navbar-collapse" id="navbarToggle">
             <div class="navbar-nav mr-auto">
+              {% if current_user.is_anonymous %}
+              <a class="nav-item nav-link" href="{{ url_for('index_guest') }}">Home</a>
+              {% else %}
               <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
+              {% endif %}
               <a class="nav-item nav-link" href="/about">About</a>
             </div>
             <!-- Navbar Right Side -->

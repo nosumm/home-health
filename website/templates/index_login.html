@@ -1,7 +1,44 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Hi, {{ current_user.username }}!</h1>
+    <h1>Hi, {{ current_user.username }} !</h1>
   
-    <div><p> This is {{current_user.username}}'s Home Page. Not sure what we want to put here. </p></div>
+    <div>
+        <p> This is {{current_user.username}}'s Home Page. </p>
+        <p>Here are some links about health centers in Seattle Area that might be helpful. </p>
+    </div>
+    <hr>
+
+    <h2>UW Medicine</h2>
+    <img src="/static/images/uw_medicine.jpg" alt="" width="200" height="200">
+    <p>The UW Medicine healthcare system includes UW Medical Center, rated the #1 hospital in Washington by the U.S. News & World Report. </p>
+    <a href="https://www.uwmedicine.org/"> UW Medicine Home Page</a>
+    <hr>
+
+    <h2>Swedish</h2>
+    <img src="/static/images/swedish.png" alt="" width="200" height="200">
+    <p>Since 1910, Swedish has been the Seattle area's hallmark for excellence in hospitals and health care.
+       Swedish is consistently named the Seattle area's best hospital, with the best doctors,
+       nurses and overall care in a variety of specialty areas.<p>
+    <a href="https://www.swedish.org/"> Swedish Home Page</a>
+    <hr>
+
+    <h2>International Community Health Services</h2>
+    <img src="/static/images/ichs.jpg" alt="" width="200" height="200">
+    <p>International Community Health Services (ICHS) is a nonprofit community health center that offers affordable health care services to anyone in need.<p>
+    <a href="https://www.ichs.com/">ICHS Home Page</a>
+    <hr>
+
+    <h2>Public Health — Seattle & King County</h2>
+    <img src="/static/images/public_health_seattle_king_county.jpg" alt="" width="200" height="200">
+    <p>Public Health — Seattle & King County (Public Health) works to protect and improve the health and well-being of all people in King County 
+       as measured by increasing the number of healthy years that people live and eliminating health disparities.<p>
+    <a href="https://kingcounty.gov/depts/health.aspx">Public Health — Seattle & King County Home Page</a>
+    <hr>
+
+    <h2>Sea Mar Community Health Center</h2>
+    <img src="/static/images/seamar.jpg" alt="" width="200" height="200">
+    <p>Sea Mar Community Health Centers is a community-based organization committed to providing quality, comprehensive health, human, housing, educational and cultural services to diverse communities, specializing in service to Latinos.<p>
+    <a href="https://kingcounty.gov/depts/health.aspx">Sea Mar Community Health Center Home Page</a>
+    <hr>
 {% endblock %}

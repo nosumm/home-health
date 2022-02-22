@@ -26,6 +26,13 @@ import pandas as pd
 from pandas import DataFrame
 from io import StringIO
 
+"""
+from ast import Pass
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
+from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length
+import app
+"""
 app = Flask(__name__)
 app.config.from_object(Config)
 login = LoginManager(app)

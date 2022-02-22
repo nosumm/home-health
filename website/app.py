@@ -26,13 +26,6 @@ import pandas as pd
 from pandas import DataFrame
 from io import StringIO
 
-"""
-from ast import Pass
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField
-from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, Length
-import app
-"""
 app = Flask(__name__)
 app.config.from_object(Config)
 login = LoginManager(app)
@@ -41,11 +34,6 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
 
-'''
-    if packet_queue.empty():
-        packet_queue = fill_queue(user, packet_queue)                    # complete initial queue fill
-        flash('packet queue was filled')
-'''
 packet_queue = queue.Queue()
 
 # admin class to store admin users 

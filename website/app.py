@@ -34,12 +34,14 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
 
-packet_queue = queue.Queue()
+packet_queue = [] # initialize empty list for packet queue
+seen_packets = [] # initialize seen packet list
+#packet_queue = queue.Queue()
 
 # admin class to store admin users 
 class people():
     people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
-    usernames = ['samuel_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', '_admin_']
+    usernames = ['samuel_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', 'nstave']
     def __repr__(self):
         return 'People {}>'.format(self.people)
 
@@ -93,8 +95,8 @@ class User(UserMixin, db.Model):
 class Packet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(500))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)         # this timestamp represents when the test was ordered
-    test_taken = db.Column(db.String(50), index=True, default=None)                 # this timestamp represents when the test was taken
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)     # this timestamp represents when the test was ordered
+    test_taken = db.Column(db.String(50), index=True, default=None)             # this timestamp represents when the test was taken
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     test_type = db.Column(db.String(150), default=None)
 
@@ -210,22 +212,25 @@ def edit_profile():
 def newtest(username):
     global packet_queue
     user = User.query.filter_by(username=username).first_or_404()
-    
-    if (packet_queue.empty()): # if the queue is, first refill then call new packet
-        flash('queue was empty when new test was called') # for testing
-        packet_queue = fill_queue(user, packet_queue)  
+    if packet_queue:
+        flash('queue is NOT empty, attempting to grab new test') # for testing
         new_packet(user, packet_queue) # call packet helper w global packet_queue
-    else:
-        flash('queue was NOT empty when new test was called') # for testing
-        new_packet(user, packet_queue) # call packet helper w global packet_queue
+    else: # if the packet_queue is empty, refill
+        flash('queue was empty, attempting to refill queue') # testing') # for testing
+        packet_queue = fill_queue(user, packet_queue)
+        pack = new_packet(user, packet_queue) # call packet helper w global packet_queue
+        #flash(pack) # testing
     # render user page again with new packet added
     return render_template('user.html', user=user, packets=user.packets.all())
 
 # route for delete all tests button  
 @app.route('/deletetests/<username>')
 def delete_all_tests(username):
+    global packet_queue
     user = User.query.filter_by(username=username).first_or_404()
     delete_all_packets(user) # call helper function
+    packet_queue.clear() # clear the packet queue
+    seen_packets.clear()                                # clear the seen packet queue THIS IS ONLY HERE FOR TESTING.
     return render_template('user.html', user=user, packets=user.packets.all()) 
  
 # route for delete this test button
@@ -234,55 +239,66 @@ def deletetest(username, packet_id):
     user = User.query.filter_by(username=username).first_or_404()
     p = Packet.query.filter_by(id=packet_id).first_or_404()
     #db.session.add(user)
+    packet_queue.pop() # pop deleted test from packet queue
     db.session.delete(p)
     db.session.commit()
     return render_template('user.html', user=user, packets=user.packets.all())  
-
 
 # this function loops through all the rows in our thingspeak csv table
 # and creates a new packet for every row 
 # packets are stored in packet_queue and sent to new_packet(user, packet_queue)
 
 # newtest() will call fill_queue whenever packet_queue is empty
-# TODO: 
-# we only want to add packets with new test result data to the queue 
-# update this funciton so that it will disregard rows w that have been grabbed before
-#  I plan to do this by storing entry_ids and checking every row's entry id
+# fill queue will check all entry_ids before adding to the queue
 def fill_queue(user, packet_queue):
+    global seen_packets
+    grabbed = 0
     thingspeak_read = urllib.request.urlopen('https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33')
     bytes_csv = thingspeak_read.read()
     data=str(bytes_csv,'utf-8')
     thingspeak_data = pd.read_csv(StringIO(data))
     body_df = pd.DataFrame(thingspeak_data)
     # creates new packet for every row in index and adds packet to our packet_queue 
-    for i in range(1,len(body_df.index) +1): 
+    for i in range(1,len(body_df.index) +1):
         this_row = thingspeak_data.iloc[-i] # isolates ith row from the bottom
-        test_taken = "Date: "+ str(this_row['field4'])+" Time: "+str(this_row['field5'])
-        # create a new packet associated for user 
-        p = Packet(body=str(this_row['field3']), author=user, test_type=str(this_row['field2']), test_taken=test_taken) # field2 = test_type
-        packet_queue.put(p) # add new packet to our packet_queue
+        #flash(this_row) # testing
+        entry_id = str(this_row['entry_id']) # save the entry id for this row
+        # TODO: check seen packets array for this entry_id
+        if entry_id not in seen_packets:
+            #flash('adding a packet to the queue') # testing
+            test_taken = "Date: "+ str(this_row['field4'])+" Time: "+str(this_row['field5'])
+            # create a new packet associated for user 
+            p = Packet(body=str(this_row['field3']), author=user, test_type=str(this_row['field2']), test_taken=test_taken) # field2 = test_type
+            packet_queue.append(p) # add new packet to our packet_queue
+            seen_packets.append(entry_id) # add this entry id to the seen packets array
+        else: # TODO:   skip this row
+            #flash('already grabbed this test')
+            grabbed += 1
+    if not packet_queue: # if packet queue is still empty after attempting to refill
+        flash('packet queue could not be refilled')
+    else:
+        flash('packet queue was filled')        
     return packet_queue
 
-
+ 
 def new_packet(user, packet_queue):
-    try:
-        while True:
-            pack = packet_queue.get(block=False)
-            done = False
-            while not done:
-                try:
-                    # do stuff
-                    # add new packet to db
-                    db.session.add(pack)
-                    db.session.commit()
-                    done = True
-                except Exception as e:
-                    pass # just try again to do stuff
-            packet_queue.task_done()
-    except Empty: # no more packets in the queue
-        pass
-           
-
+    global seen_packets
+    entry_length = len(packet_queue)
+    done = False
+    while not done:
+    # while len(packet_queue) == entry_length:
+        try:
+            pack = packet_queue.pop()
+            seen_packets.append(pack) # append this packet to the seen packets list
+            # do stuff
+            # add new packet to db
+            db.session.add(pack)
+            db.session.commit()
+            done = True
+        except Exception as e:
+            flash('No New Test Results Available')
+            done = True
+                
 # this function deletes all packets for the given user
 def delete_all_packets(user):
     packets = user.packets.all() 

@@ -10,4 +10,5 @@ pip install python-dotenv
 pip install flask-wtf
 pip install pandas
 pip install numpy
+pip install bokeh
 

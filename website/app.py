@@ -211,7 +211,7 @@ def edit_profile():
 @app.route('/newtest/<username>')
 def newtest(username):
     user = User.query.filter_by(username=username).first_or_404()
-    if not new_packet(user):
+    if not new_packet(user, 'PULSE'):
         flash('No New Test Results Available')
     else:
         flash('New Test Result was Grabbed') 
@@ -244,12 +244,12 @@ def deletetest(username, packet_id):
 # then add this row's entry id to the seen_packets array
 # otherwise check the next row 
 # returns false if no new test result was found
-def new_packet(user):
+def new_packet(user, test_type):
     global seen_packets
     global test_types
     grab = 0
     done = False
-    url = test_types['PULSE'] # grab from appropriate channel. each test type will has its own channel
+    url = test_types[test_type] # grab from appropriate channel. each test type will has its own channel
     thingspeak_read = urllib.request.urlopen(url)
     bytes_csv = thingspeak_read.read()
     data=str(bytes_csv,'utf-8')

@@ -11,7 +11,8 @@
 
     <p><a href="{{ url_for('edit_profile') }}">Edit Your Profile</a></p>
     <p><a href="{{ url_for('test_chart', username=current_user.username)}}">Test Charts</a></p>
-    <p><a href="{{ url_for('newtest', username=current_user.username) }}">Grab Test Data</a></p>
+    <p><a href="{{ url_for('newtest', username=current_user.username) }}">Grab Pulse Data</a></p>
+    <p><a href="{{ url_for('newtest', username=current_user.username) }}">Grab EMG Data</a></p>
     <p><a href="{{ url_for('delete_all_tests', username=current_user.username) }}">Delete All Tests</a></p>
     </table>
     <hr>

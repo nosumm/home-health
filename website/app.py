@@ -34,9 +34,8 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 mail = Mail(app)
 
-packet_queue = [] # initialize empty list for packet queue
 seen_packets = [] # initialize seen packet list
-test_types = {'EMG': 'https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33', 'PULSE': 'https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33'}# test type dict stores channel id for each test type
+test_types = {'EMG': 'https://api.thingspeak.com/channels/1664068/feeds.csv?api_key=NJCHLCB72TL1X017', 'PULSE': 'https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33'}# test type dict stores channel id for each test type
 #packet_queue = queue.Queue()
 
 # admin class to store admin users 
@@ -211,27 +210,23 @@ def edit_profile():
 # route for the grab new test data button on user profile page    
 @app.route('/newtest/<username>')
 def newtest(username):
-    global packet_queue
     user = User.query.filter_by(username=username).first_or_404()
-    if packet_queue:
-        flash('queue is NOT empty, attempting to grab new test') # for testing
-        new_packet(user, packet_queue) # call packet helper w global packet_queue
-    else: # if the packet_queue is empty, refill
-        flash('queue was empty, attempting to refill queue') # testing') # for testing
-        packet_queue = fill_queue(user, packet_queue)
-        pack = new_packet(user, packet_queue) # call packet helper w global packet_queue
-        #flash(pack) # testing
+    if not new_packet(user):
+        flash('No New Test Results Available')
+    else:
+        flash('New Test Result was Grabbed') 
     # render user page again with new packet added
     return render_template('user.html', user=user, packets=user.packets.all())
 
-# route for delete all tests button  
+# route for delete all tests button
+# deletes all packets for the given user
 @app.route('/deletetests/<username>')
 def delete_all_tests(username):
-    global packet_queue
     user = User.query.filter_by(username=username).first_or_404()
-    delete_all_packets(user) # call helper function
-    packet_queue.clear() # clear the packet queue                   #TODO: remove this later??? do we want to clear queue when we delete all tests?
-    seen_packets.clear()                                # clear the seen packet queue THIS IS ONLY HERE FOR TESTING.
+    packets = user.packets.all()
+    for p in packets:
+        db.session.delete(p)
+    db.session.commit()
     return render_template('user.html', user=user, packets=user.packets.all()) 
  
 # route for delete this test button
@@ -239,81 +234,42 @@ def delete_all_tests(username):
 def deletetest(username, packet_id):
     user = User.query.filter_by(username=username).first_or_404()
     p = Packet.query.filter_by(id=packet_id).first_or_404()
-    #db.session.add(user)
     db.session.delete(p)
     db.session.commit()
-    return render_template('user.html', user=user, packets=user.packets.all())  
+    return render_template('user.html', user=user, packets=user.packets.all())
 
-# this function loops through all the rows in our thingspeak csv table
-# and creates a new packet for every row 
-# packets are stored in packet_queue and sent to new_packet(user, packet_queue)
-# newtest() will call fill_queue whenever packet_queue is empty
-# fill queue will check all entry_ids before adding to the queue
-# BUG: fill_queue adds packets to queue AND prints out every packet it creates.
-# this means that the grab new test button basically just grabs ALL new tests
-# and the actual packet queue list isnt actually doing anything
-# I intended for new_packet to print tests but turns out Packet() prints the packets (I thought db command did this when I wrote this code). 
-# idk if im going to change the code or just let the new grab button grab ALL new test results instead of the most recent
-
-def fill_queue(user, packet_queue):
+# this function loops through all the rows in the appropriate csv table
+# checks seen_packets for each row's entry id
+# new entry id --> create new packet for the user with the data from this row
+# then add this row's entry id to the seen_packets array
+# otherwise check the next row 
+# returns false if no new test result was found
+def new_packet(user):
     global seen_packets
     global test_types
-    grabbed = 0
-    # grab from appropriate channel. each test type will have its own channel
-    url = test_types['PULSE'] 
+    grab = 0
+    done = False
+    url = test_types['PULSE'] # grab from appropriate channel. each test type will has its own channel
     thingspeak_read = urllib.request.urlopen(url)
     bytes_csv = thingspeak_read.read()
     data=str(bytes_csv,'utf-8')
     thingspeak_data = pd.read_csv(StringIO(data))
     body_df = pd.DataFrame(thingspeak_data)
     # creates new packet for every row in index and adds packet to our packet_queue 
-    for i in range(1,len(body_df.index) +1):
-        this_row = thingspeak_data.iloc[-i] # isolates ith row from the bottom
-        #flash(this_row) # testing
+    while grab < len(body_df.index) and done is False: 
+        this_row = thingspeak_data.iloc[grab] 
         entry_id = str(this_row['entry_id']) # save the entry id for this row
-        # TODO: check seen packets array for this entry_id
+        # check seen packets array for this entry_id
         if entry_id not in seen_packets:
-            #flash('adding a packet to the queue') # testing
             test_taken = "Date: "+ str(this_row['field4'])+" Time: "+str(this_row['field5'])
             # create a new packet associated for user 
             p = Packet(body=str(this_row['field3']), author=user, test_type=str(this_row['field2']), test_taken=test_taken) # field2 = test_type
-            packet_queue.append(p) # add new packet to our packet_queue
-            seen_packets.append(entry_id) # add this entry id to the seen packets array
-        else: # TODO:   skip this row
-            #flash('already grabbed this test')
-            grabbed += 1
-    if not packet_queue: # if packet queue is still empty after attempting to refill
-        flash('packet queue could not be refilled')
-    else:
-        flash('packet queue was filled')        
-    return packet_queue
-
- 
-def new_packet(user, packet_queue):
-    global seen_packets
-    entry_length = len(packet_queue)
-    done = False
-    while not done:
-    # while len(packet_queue) == entry_length:
-        try:
-            pack = packet_queue.pop()
-            seen_packets.append(pack) # append this packet to the seen packets list
-            # do stuff
-            # add new packet to db
-            db.session.add(pack)
+            db.session.add(p) # add packet to db
             db.session.commit()
+            seen_packets.append(entry_id) # add this entry id to the seen packets array
             done = True
-        except Exception as e:
-            flash('No New Test Results Available')
-            done = True
-                
-# this function deletes all packets for the given user
-def delete_all_packets(user):
-    packets = user.packets.all() 
-    for p in packets:
-        # add new packet to db
-        db.session.delete(p)
-    db.session.commit()
+        grab += 1       
+    return done
 
 # route for view entire test result 
 @app.route('/open_packet/<username>/<packet_id>')

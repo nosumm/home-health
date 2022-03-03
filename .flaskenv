@@ -1,4 +1,4 @@
-FLASK_APP=website/app
+FLASK_APP=app
 FLASK_ENV=development
 
 MAIL_SERVER=smtp.googlemail.com

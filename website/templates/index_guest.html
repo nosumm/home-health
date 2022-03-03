@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Hi, guest user! </h1>
-    <p> Please <a href="{{ url_for('signup') }}">Create an Account</a> or <a href="{{ url_for('login') }}">Log In </a> </h1>
-    <p> You can also check out our <a href="{{ url_for('about') }}">About Page</a> to learn more about our IOT project. </p>
+    <p> Please <a href="{{ url_for('auth.signup') }}">Create an Account</a> or <a href="{{ url_for('auth.login') }}">Log In </a> </h1>
+    <p> You can also check out our <a href="{{ url_for('main.about') }}">About Page</a> to learn more about our IOT project. </p>
   
 {% endblock %}

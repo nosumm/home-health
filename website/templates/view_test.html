@@ -2,8 +2,8 @@
 
 {% block content %}
 <h1> Results for Test{{packet.id}}</h1>
-<p><a href="{{ url_for('deletetest', username=current_user.username, packet_id=packet.id) }}">Delete Test {{packet.id}}</a></p>
-<p><a href="{{ url_for('user', username=current_user.username)}}">Back To All Tests</a></p>
+<p><a href="{{ url_for('main.deletetest', username=current_user.username, packet_id=packet.id) }}">Delete Test {{packet.id}}</a></p>
+<p><a href="{{ url_for('auth.user', username=current_user.username)}}">Back To All Tests</a></p>
 <p><td>User: {{packet.author.username}}  | Test Data Ordered: {{packet.timestamp}}</td></p>
 <p>Test Taken: {{packet.test_taken}}</p>
 

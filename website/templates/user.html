@@ -9,13 +9,13 @@
 
     {% endif %}
 
-    <td><a href="{{ url_for('edit_profile') }}">Edit Your Profile</a></td>
-    <td><a href="{{ url_for('test_chart', username=current_user.username)}}"> |    Test Charts</a></td>
+    <td><a href="{{ url_for('auth.edit_profile') }}">Edit Your Profile</a></td>
+    <td><a href="{{ url_for('main.test_chart', username=current_user.username)}}"> |    Test Charts</a></td>
 </hr>
     <hr>
-    <td><a href="{{ url_for('newtest', username=current_user.username) }}">Grab Pulse Data</a></td>
-    <td><a href="{{ url_for('newtest', username=current_user.username) }}"> |    Grab EMG Data</a></td>
-    <td><a href="{{ url_for('delete_all_tests', username=current_user.username) }}"> |    Delete All Tests</a></td>
+    <td><a href="{{ url_for('main.newtest', username=current_user.username) }}">Grab Pulse Data</a></td>
+    <td><a href="{{ url_for('main.newtest', username=current_user.username) }}"> |    Grab EMG Data</a></td>
+    <td><a href="{{ url_for('main.delete_all_tests', username=current_user.username) }}"> |    Delete All Tests</a></td>
    </hr> 
     {% for packet in packets %}
     <p>

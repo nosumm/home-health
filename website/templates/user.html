@@ -8,6 +8,9 @@
     <p>This is an admin account</p>
 
     {% endif %}
+    {% if user.last_seen %}
+    <p>Last seen on: {{ moment(user.last_seen).format('LLL') }}</p>
+    {% endif %}
 
     <td><a href="{{ url_for('auth.edit_profile') }}">Edit Your Profile</a></td>
     <td><a href="{{ url_for('main.test_chart', username=current_user.username)}}"> |    Test Charts</a></td>

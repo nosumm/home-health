@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+<html>
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -63,7 +64,12 @@
               {% endfor %}
             {% endif %}
           {% endwith %}
+
+{{ moment.include_moment() }}
+
           {% block content %}{% endblock %}
+
+
     </main>
 
     <!-- Optional JavaScript. not sure if we will use javascript or not -->

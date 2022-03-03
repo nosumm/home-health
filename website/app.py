@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from forms import LoginForm, SignupForm, EditProfileForm
+from forms import LoginForm, SignupForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.urls import url_parse
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required, UserMixin
@@ -15,6 +15,11 @@ import re # for regex
 from flask_mail import Mail
 import queue
 from queue import Empty
+from time import time
+import jwt
+from flask_mail import Message
+from flask import render_template
+from threading import Thread
 
 import random
 import numpy as np
@@ -35,7 +40,8 @@ migrate = Migrate(app, db)
 mail = Mail(app)
 
 seen_packets = [] # initialize seen packet list
-test_types = {'EMG': 'https://api.thingspeak.com/channels/1664068/feeds.csv?api_key=NJCHLCB72TL1X017', 'PULSE': 'https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33'}# test type dict stores channel id for each test type
+# test type dict stores channel id for each test type
+test_types = {'EMG': 'https://api.thingspeak.com/channels/1664068/feeds.csv?api_key=NJCHLCB72TL1X017', 'PULSE': 'https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33'}
 #packet_queue = queue.Queue()
 
 # admin class to store admin users 
@@ -44,7 +50,8 @@ class people():
     usernames = ['samuel_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', 'nstave']
     def __repr__(self):
         return 'People {}>'.format(self.people)
-
+    
+    
 # User class for db
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -90,6 +97,20 @@ class User(UserMixin, db.Model):
                 self.admin = False
         except ValueError:
             self.admin = False
+            
+    def get_reset_password_token(self, expires_in=600):
+        return jwt.encode(
+            {'reset_password': self.id, 'exp': time() + expires_in},
+            app.config['SECRET_KEY'], algorithm='HS256')
+    
+    @staticmethod
+    def verify_reset_password_token(token):
+        try:
+            id = jwt.decode(token, app.config['SECRET_KEY'],
+                            algorithms=['HS256'])['reset_password']
+        except:
+            return
+        return User.query.get(id)
 
 # packet class for db
 class Packet(db.Model):
@@ -104,9 +125,30 @@ class Packet(db.Model):
         self.id = id
         self.user_id = User.id
         return '<Packet {}>'.format(self.body)   
+
+# stuff from email.py for password reset
+
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
+def send_email(subject, sender, recipients, text_body, html_body):
+    msg = Message(subject, sender=sender, recipients=recipients)
+    msg.body = text_body
+    msg.html = html_body
+    Thread(target=send_async_email, args=(app, msg)).start()
+
+def send_password_reset_email(user):
+    token = user.get_reset_password_token()
+    send_email('Reset Your Password',
+               sender=app.config['ADMINS'][0],
+               recipients=[user.email],
+               text_body=render_template('email/reset_password.txt',
+                                         user=user, token=token),
+               html_body=render_template('email/reset_password.html',
+                                         user=user, token=token))
     
 # APP ROUTES
-
 # this route loads the user with the given id
 @login.user_loader
 def load_user(id):
@@ -207,6 +249,35 @@ def edit_profile():
     return render_template('edit_profile.html', title='Edit Profile',
                            form=form)
 
+@app.route('/reset_password_request', methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = ResetPasswordRequestForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            send_password_reset_email(user)
+        flash('Check your email for the instructions to reset your password')
+        return redirect(url_for('login'))
+    return render_template('reset_password_request.html',
+                           title='Reset Password', form=form)
+    
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    user = User.verify_reset_password_token(token)
+    if not user:
+        return redirect(url_for('index'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        db.session.commit()
+        flash('Your password has been reset.')
+        return redirect(url_for('login'))
+    return render_template('reset_password.html', form=form)
+
 # route for the grab new test data button on user profile page    
 @app.route('/newtest/<username>')
 def newtest(username):
@@ -268,14 +339,13 @@ def new_packet(user, test_type):
             db.session.commit()
             seen_packets.append(entry_id) # add this entry id to the seen packets array
             done = True
-        grab += 1       
+        grab += 1 
     return done
 
 # route for view entire test result 
 @app.route('/open_packet/<username>/<packet_id>')
 def open_packet(username, packet_id):
     user = User.query.filter_by(username=username).first_or_404()
-    #pack = Packet.query.filter_by(id=packet_id).first_or_404()
     return render_template('view_test.html', user=user, packet=Packet.query.get(packet_id))
 
 # route for test visualization/chart page
@@ -317,10 +387,7 @@ def progress():
 ## end about page routes
     
 # admin functions - todo 
-
-      
 if __name__ == '__main__':
     app.jinja_env.cache = {} # clear cache -> optimize page load time
     app.run(debug=True)
-    
     

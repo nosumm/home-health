@@ -12,7 +12,6 @@ import rq
 import re # for regex
 from website import db, login
 
-
 # User class for db
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -23,6 +22,7 @@ class User(UserMixin, db.Model):
     packets = db.relationship("Packet", backref='author', lazy='dynamic')
     packet_count = db.Column(db.Integer, index=True)                    # TODO: managing the users packet counter
     admin = db.Column(db.Integer, index=True, default=False)
+    #seen_packets = [] 
 
     def __repr__(self):
         self.id = id
@@ -62,12 +62,12 @@ class User(UserMixin, db.Model):
     def get_reset_password_token(self, expires_in=600):
         return jwt.encode(
             {'reset_password': self.id, 'exp': time() + expires_in},
-            app.config['SECRET_KEY'], algorithm='HS256')
+            current_app.config['SECRET_KEY'], algorithm='HS256')
     
     @staticmethod
     def verify_reset_password_token(token):
         try:
-            id = jwt.decode(token, app.config['SECRET_KEY'],
+            id = jwt.decode(token, current_app.config['SECRET_KEY'],
                             algorithms=['HS256'])['reset_password']
         except:
             return
@@ -93,7 +93,7 @@ class Packet(db.Model):
 # admin class to store admin users 
 class people():
     people = ['Samuel Awuah', 'Shujian Lao', 'Will J Lee', 'Christin Lin', 'Mino Song', 'Noah S Staveley']
-    usernames = ['samuel_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'noah_s', 'nstave']
+    usernames = ['samuel_awuah, shujian_lao', 'will_lee', 'christin_lin', 'mino_song', 'nstave']
     def __repr__(self):
         return 'People {}>'.format(self.people)
     

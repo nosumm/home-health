@@ -4,7 +4,8 @@ from threading import Thread
 from website import mail
 
 
-# the sending of the email will run in the thread, and when the process completes the thread will end and clean itself up
+# email sending process runs in thread
+# when the process completes the thread will end and clean itself up
 
 from flask import current_app
 
@@ -21,8 +22,8 @@ def send_email(subject, sender, recipients, text_body, html_body):
 
 def send_password_reset_email(user):
     token = user.get_reset_password_token()
-    send_email('Reset Your Password',
-               sender=app.config['ADMINS'][0],
+    send_email('[Microblog] Reset Your Password',
+               sender=current_app.config['ADMINS'][0],
                recipients=[user.email],
                text_body=render_template('email/reset_password.txt',
                                          user=user, token=token),

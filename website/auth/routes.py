@@ -8,6 +8,7 @@ from website.models import User
 from website.auth.email import send_password_reset_email
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from website.models import people
+from flask import current_app
 
 # home page for guests (not logged in)
 @bp.route('/')

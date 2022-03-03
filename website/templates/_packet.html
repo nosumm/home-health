@@ -1,11 +1,10 @@
 <table>
         <tr valign="top">
             <td>{{ packet.test_type }} Test Result <br></td>
-            <td>User:{{ packet.author.username}}  </td>
-            <td>unique_id:{{packet.id}} |   Test Data Ordered: {{packet.timestamp}}</td>
+            <td>  |   Unique_id:{{packet.id}}   |   Test Data Ordered: {{packet.timestamp}}</td>
         
-        <a href="{{ url_for('main.deletetest', username=current_user.username, packet_id=packet.id) }}">delete this test  </a>
-        <a href="{{ url_for('main.open_packet', username=current_user.username, packet_id=packet.id) }}">   |  view entire contents</a>
+        <a href="{{ url_for('main.deletetest', username=current_user.username, packet_id=packet.id) }}">Delete This Test </a>
+        <a href="{{ url_for('main.open_packet', username=current_user.username, packet_id=packet.id) }}">   |  View Test Results</a>
         </tr>
         
     </table>

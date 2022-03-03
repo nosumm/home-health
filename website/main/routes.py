@@ -26,20 +26,18 @@ from website.main import bp
 from website.models import people
 from website import db
 
-seen_packets = [] # initialize seen packet list
+seen_packets = [] # TODO: make this part of the user class so each user has their own seen packets array. 
 # test type dict stores channel id for each test type
 test_types = {'EMG': 'https://api.thingspeak.com/channels/1664068/feeds.csv?api_key=NJCHLCB72TL1X017', 'PULSE': 'https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33'}
 
-
-# APP ROUTES
 # route for the grab new test data button on user profile page    
 @bp.route('/newtest/<username>')
 def newtest(username):
     user = User.query.filter_by(username=username).first_or_404()
     if not new_packet(user, 'PULSE'):
         flash('No New Test Results Available')
-    else:
-        flash('New Test Result was Grabbed') 
+    #else:
+        #flash('New Test Result was Grabbed') 
     # render user page again with new packet added
     return render_template('user.html', user=user, packets=user.packets.all())
 
@@ -107,26 +105,3 @@ def open_packet(username, packet_id):
 def test_chart(username):
     user = User.query.filter_by(username=username).first_or_404()
     return render_template('test_chart.html', user=user)
-
-
-# routes for about page
-@bp.route('/about')
-def about():
-    return render_template('about.html', people=people.people)
-
-@bp.route('/hardware_team')
-def hardware():
-    return render_template('hardware_team.html', people=people.people)
-
-@bp.route('/software_team')
-def software():
-    return render_template('software_team.html', people=people.people)
-
-@bp.route('/introduction')
-def introduction():
-    return render_template('introduction.html', people=people.people)
-
-@bp.route('/progress')
-def progress():
-    return render_template('progress.html', people=people.people)
-## end about page routes

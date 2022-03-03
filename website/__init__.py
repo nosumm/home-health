@@ -48,6 +48,9 @@ def create_app(config_class=Config):
 
     from website.main import bp as main_bp
     app.register_blueprint(main_bp)
+    
+    from website.about import bp as about_bp
+    app.register_blueprint(about_bp)
 
     #from website.api import bp as api_bp
     #app.register_blueprint(api_bp, url_prefix='/api')

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>User: {{ user.username }}</h1>
+    <h1>{{ user.username }}</h1>
     <hr>
     {% if user == current_user %}
     {% if user.admin == True %}
@@ -13,11 +13,11 @@
     {% endif %}
 
     <td><a href="{{ url_for('auth.edit_profile') }}">Edit Your Profile</a></td>
+    <td><a href="{{ url_for('main.newEMGtest', username=current_user.username) }}"> |    EMG Data</a></td>
     <td><a href="{{ url_for('main.test_chart', username=current_user.username)}}"> |    Test Charts</a></td>
 </hr>
     <hr>
     <td><a href="{{ url_for('main.newtest', username=current_user.username) }}">Grab Pulse Data</a></td>
-    <td><a href="{{ url_for('main.newtest', username=current_user.username) }}"> |    Grab EMG Data</a></td>
     <td><a href="{{ url_for('main.delete_all_tests', username=current_user.username) }}"> |    Delete All Tests</a></td>
    </hr> 
     {% for packet in packets %}

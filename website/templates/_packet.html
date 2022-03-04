@@ -1,7 +1,7 @@
 <table>
         <tr valign="top">
             <td>{{ packet.test_type }} Test Result <br></td>
-            <td>  |   Unique_id:{{packet.id}}   |   Test Data Ordered: {{ moment(packet.timestamp).fromNow() }}</td>
+            <td>  |   Unique_id:{{packet.id}}   |   Data Ordered: {{ moment(packet.timestamp).fromNow() }}</td>
         
         <a href="{{ url_for('main.deletetest', username=current_user.username, packet_id=packet.id) }}">Delete This Test </a>
         <a href="{{ url_for('main.open_packet', username=current_user.username, packet_id=packet.id) }}">   |  View Test Results</a>

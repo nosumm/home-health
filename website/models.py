@@ -22,12 +22,15 @@ class User(UserMixin, db.Model):
     packets = db.relationship("Packet", backref='author', lazy='dynamic')
     packet_count = db.Column(db.Integer, index=True)                    # TODO: managing the users packet counter
     admin = db.Column(db.Integer, index=True, default=False)
-    #seen_packets = [] 
+    seen_packets = [] 
 
     def __repr__(self):
         self.id = id
         return '<User {}>'.format(self.username)
     
+    def add_packet(self, packet):
+        self.seen_packets.append(packet)
+        
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 

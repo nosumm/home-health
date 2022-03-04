@@ -41,6 +41,28 @@ def newtest(username):
     # render user page again with new packet added
     return render_template('user.html', user=user, packets=user.packets.all())
 
+# route for the grab new test data button on user profile page    
+@bp.route('/newEMGtest/<username>')
+def newEMGtest(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    #new_EMGpacket(user)
+    #if not new_EMGpacket(user):
+        #flash('No New Test Results Available')
+    #else:
+        #flash('New Test Result was Grabbed') 
+    # render user page again with new packet added
+    url = test_types['EMG'] # grab from appropriate channel. each test type will has its own channel
+    thingspeak_read = urllib.request.urlopen(url)
+    bytes_csv = thingspeak_read.read()
+    data=str(bytes_csv,'utf-8')
+    thingspeak_data = pd.read_csv(StringIO(data))
+    body_df = pd.DataFrame(thingspeak_data)
+    cols = [0,2]
+    df = body_df[body_df.columns[cols]]
+    #df.style.set_properties(subset=cols[1], **{'font-weight': 'bold'})
+    #return render_template('user.html', user=user, packets=user.packets.all())
+    return render_template('EMGtest.html', user=user, data=df.to_html())
+
 # route for delete all tests button
 # deletes all packets for the given user
 @bp.route('/deletetests/<username>')
@@ -61,11 +83,11 @@ def deletetest(username, packet_id):
     db.session.commit()
     return render_template('user.html', user=user, packets=user.packets.all())
 
-# this function loops through all the rows in the appropriate csv table
+# this function loops through all the rows in the appropriate csv table (Pulse or EMG)
 # checks seen_packets for each row's entry id
-# new entry id --> create new packet for the user with the data from this row
-# then add this row's entry id to the seen_packets array
-# otherwise check the next row 
+# if new entry id --> create new packet for the user with the data from this row
+# then add this row's entry id to the user's seen_packets array
+# otherwise check the next row
 # returns false if no new test result was found
 def new_packet(user, test_type):
     global seen_packets
@@ -83,6 +105,7 @@ def new_packet(user, test_type):
         this_row = thingspeak_data.iloc[grab] 
         entry_id = str(this_row['entry_id']) # save the entry id for this row
         # check seen packets array for this entry_id
+        #if entry_id not in seen_packets:
         if entry_id not in seen_packets:
             test_taken = "Date: "+ str(this_row['field4'])+" Time: "+str(this_row['field5'])
             # create a new packet associated for user 
@@ -90,9 +113,24 @@ def new_packet(user, test_type):
             db.session.add(p) # add packet to db
             db.session.commit()
             seen_packets.append(entry_id) # add this entry id to the seen packets array
+            user.add_packet(entry_id) # add this entry id to the user's seen packets array 
             done = True
         grab += 1 
     return done
+'''
+def new_EMGpacket(user):
+    url = test_types['EMG'] # grab from appropriate channel. each test type will has its own channel
+    thingspeak_read = urllib.request.urlopen(url)
+    bytes_csv = thingspeak_read.read()
+    data=str(bytes_csv,'utf-8')
+    thingspeak_data = pd.read_csv(StringIO(data))
+    body_df = pd.DataFrame(thingspeak_data)
+    #this_row = thingspeak_data.iloc[1] 
+    #test_taken = "Test Taken: "+ this_row['created_at']
+    #p = Packet(body=body_df, author=user, test_type=str('EMG'))
+    #db.session.add(p)
+    #db.session.commit()
+'''
 
 # route for view entire test result 
 @bp.route('/open_packet/<username>/<packet_id>')

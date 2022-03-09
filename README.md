@@ -2,7 +2,7 @@
 
 Developed with: Python Flask, Jinja2 and HTML, and CSS.  
 
-Hosted on Heroku --> replacing SQLite w/ Heroku Postgres Database 
+Hosted on Heroku --> using Heroku Postgres Database 
 
 ## Development Notes
 

@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1> Results for EMG Test</h1>
-<p><a href="{{ url_for('auth.user', username=current_user.username)}}">Back To All Tests</a></p>
+<p><a href="{{ url_for('main.user', username=current_user.username)}}">Back To All Tests</a></p>
 <p><td>User: {{user.username}} </td></p>
 
 {{data | safe}}

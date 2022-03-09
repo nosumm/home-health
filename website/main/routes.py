@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_moment import Moment
 from website.auth.forms import LoginForm, SignupForm, EditProfileForm, ResetPasswordRequestForm, ResetPasswordForm
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 
 from werkzeug.urls import url_parse
 from datetime import datetime
@@ -26,6 +27,52 @@ from website.main import bp
 from website.models import people
 from website import db
 
+# home page for guests (not logged in)
+@bp.route('/')
+@bp.route('/index_guest')
+def index_guest():
+    return render_template("main/index_guest.html", title='Home Page')
+
+# this route renders the user profile page 
+@bp.route('/user/<username>')
+@login_required
+def user(username):
+    user = User.query.filter_by(username=username).first_or_404()        
+    return render_template('main/user.html', user=user, packets=user.packets.all())
+
+# this app route loads the home page 
+# you must log in to view the home page 
+# right now the home page simply displays a custom greeting for the user
+@bp.route('/')
+@bp.route('/index')
+@login_required
+def index():
+    return render_template("main/index_login.html", title='Home Page')
+
+# route for edit profile form 
+@bp.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        current_user.DOB = form.DOB.data
+        current_user.validate_DOB(form.DOB.data)
+        current_user.validate_email(form.email.data) 
+        db.session.commit()
+        flash('Your changes have been saved.')
+        return redirect(url_for('auth.edit_profile'))
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+        form.DOB.data = current_user.DOB
+    return render_template('main/edit_profile.html', title='Edit Profile',
+                           form=form)
+
+
+# BELOW ARE THE ROUTES THAT GRAB THE USER'S TEST RESULTS 
+
 seen_packets = [] # TODO: make this part of the user class so each user has their own seen packets array. 
 # test type dict stores channel id for each test type
 test_types = {'EMG': 'https://api.thingspeak.com/channels/1664068/feeds.csv?api_key=NJCHLCB72TL1X017', 'PULSE': 'https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33'}
@@ -39,7 +86,7 @@ def newtest(username):
     #else:
         #flash('New Test Result was Grabbed') 
     # render user page again with new packet added
-    return render_template('user.html', user=user, packets=user.packets.all())
+    return render_template('main/user.html', user=user, packets=user.packets.all())
 
 # route for the grab new test data button on user profile page    
 @bp.route('/newEMGtest/<username>')
@@ -61,7 +108,7 @@ def newEMGtest(username):
     df = body_df[body_df.columns[cols]]
     #df.style.set_properties(subset=cols[1], **{'font-weight': 'bold'})
     #return render_template('user.html', user=user, packets=user.packets.all())
-    return render_template('EMGtest.html', user=user, data=df.to_html())
+    return render_template('main/EMGtest.html', user=user, data=df.to_html())
 
 # route for delete all tests button
 # deletes all packets for the given user
@@ -72,7 +119,7 @@ def delete_all_tests(username):
     for p in packets:
         db.session.delete(p)
     db.session.commit()
-    return render_template('user.html', user=user, packets=user.packets.all()) 
+    return render_template('main/user.html', user=user, packets=user.packets.all()) 
  
 # route for delete this test button
 @bp.route('/deletetest/<username>/<packet_id>')
@@ -81,7 +128,7 @@ def deletetest(username, packet_id):
     p = Packet.query.filter_by(id=packet_id).first_or_404()
     db.session.delete(p)
     db.session.commit()
-    return render_template('user.html', user=user, packets=user.packets.all())
+    return render_template('main/user.html', user=user, packets=user.packets.all())
 
 # this function loops through all the rows in the appropriate csv table (Pulse or EMG)
 # checks seen_packets for each row's entry id
@@ -136,10 +183,10 @@ def new_EMGpacket(user):
 @bp.route('/open_packet/<username>/<packet_id>')
 def open_packet(username, packet_id):
     user = User.query.filter_by(username=username).first_or_404()
-    return render_template('view_test.html', user=user, packet=Packet.query.get(packet_id))
+    return render_template('main/view_test.html', user=user, packet=Packet.query.get(packet_id))
 
 # route for test visualization/chart page
 @bp.route('/open_packet/<username>/test_chart')
 def test_chart(username):
     user = User.query.filter_by(username=username).first_or_404()
-    return render_template('test_chart.html', user=user)
+    return render_template('main/test_chart.html', user=user)

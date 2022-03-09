@@ -24,9 +24,9 @@
           <div class="collapse navbar-collapse" id="navbarToggle">
             <div class="navbar-nav mr-auto">
               {% if current_user.is_anonymous %}
-              <a class="nav-item nav-link" href="{{ url_for('auth.index_guest') }}">Home</a>
+              <a class="nav-item nav-link" href="{{ url_for('main.index_guest') }}">Home</a>
               {% else %}
-              <a class="nav-item nav-link" href="{{ url_for('auth.index') }}">Home</a>
+              <a class="nav-item nav-link" href="{{ url_for('main.index') }}">Home</a>
               {% endif %}
               <a class="nav-item nav-link" href="/about">About</a>
             </div>
@@ -38,7 +38,7 @@
             </div>
           
             {% else %}
-            <a class="navbar-brand" href="{{ url_for('auth.user', username=current_user.username) }}">Profile</a>
+            <a class="navbar-brand" href="{{ url_for('main.user', username=current_user.username) }}">Profile</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>

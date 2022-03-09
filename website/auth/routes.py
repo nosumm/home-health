@@ -31,7 +31,7 @@ def login():
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('auth.index')
         return redirect(next_page)
-    return render_template('templates/auth/login.html', title='Log In', form=form)
+    return render_template('auth/login.html', title='Log In', form=form)
 
 # log out route 
 @bp.route('/logout')
@@ -60,7 +60,7 @@ def signup():
         if user.admin == True:
             flash('This is an admin account')
         return redirect(url_for('auth.login'))
-    return render_template('templates/auth/signup.html', title='Sign up', form=form)
+    return render_template('auth/signup.html', title='Sign up', form=form)
 
 # this route renders the user profile page 
 @bp.route('/user/<username>')

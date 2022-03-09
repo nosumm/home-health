@@ -14,7 +14,7 @@ from flask import current_app
 @bp.route('/')
 @bp.route('/index_guest')
 def index_guest():
-    return render_template("index_guest.html", title='Home Page')
+    return render_template("auth/index_guest.html", title='Home Page')
 # route for log in page
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -76,7 +76,7 @@ def user(username):
 @bp.route('/index')
 @login_required
 def index():
-    return render_template("index_login.html", title='Home Page')
+    return render_template("auth/index_login.html", title='Home Page')
 
 # route for edit profile form 
 @bp.route('/edit_profile', methods=['GET', 'POST'])

@@ -33,3 +33,5 @@ This was the solution to a database connection error I randomly starting getting
         Error: Can't locate revision identified by '<some_id>'
         - go into the generated .py file in migrations/versions/__pycache__ and replace revision id with the id from error message
     - flask db migrate and flask db upgrade now work properly 
+
+## 

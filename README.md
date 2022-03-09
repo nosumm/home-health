@@ -1,4 +1,10 @@
-# home-health - ongoing project. not hosted publically yet 
+# home-health 
+
+Developed with: Python Flask, Jinja2 and HTML, and CSS.  
+
+Hosted on Heroku
+
+## Development Notes
 
 before launching the website you must active the python3 environment (my_env):
     

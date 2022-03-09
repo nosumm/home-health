@@ -44,10 +44,5 @@ pandas==1.1.5
 bs4==0.0.1
 
 # requirements for Heroku
-<<<<<<< HEAD:requirements.txt
-psycopg2==2.9.1
-gunicorn==20.1.0
-=======
 psycopg2-binary==2.9.1
 gunicorn==20.1.0
->>>>>>> 25d05b115fd1d845a556f7368d55e0d5ec517b5c:_installs.txt

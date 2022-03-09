@@ -1,4 +1,10 @@
-# home-health - ongoing project. not hosted publically yet 
+# home-health 
+
+Developed with: Python Flask, Jinja2 and HTML, and CSS.  
+
+Hosted on Heroku --> using Heroku Postgres Database 
+
+## Development Notes
 
 before launching the website you must active the python3 environment (my_env):
     
@@ -27,3 +33,5 @@ This was the solution to a database connection error I randomly starting getting
         Error: Can't locate revision identified by '<some_id>'
         - go into the generated .py file in migrations/versions/__pycache__ and replace revision id with the id from error message
     - flask db migrate and flask db upgrade now work properly 
+
+## 

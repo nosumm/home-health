@@ -2,7 +2,15 @@
 
 {% block content %}
 <h1> Results for EMG Test</h1>
+
+<table>
+    <p> EMG Chart </p>
+  <iframe width="470" height="270" style="border: 1px solid #cccccc;" src="https://thingspeak.com/apps/matlab_visualizations/451630?size=iframe"></iframe>
+ 
+     
+ </table>
 <p><a href="{{ url_for('main.user', username=current_user.username)}}">Back To All Tests</a></p>
+
 <p><td>User: {{user.username}} </td></p>
 
 {{data | safe}}

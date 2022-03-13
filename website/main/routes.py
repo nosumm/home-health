@@ -27,6 +27,18 @@ from website.main import bp
 from website.models import people
 from website import db
 
+from bokeh.plotting import figure, show,save,output_file, curdoc
+from bokeh.layouts import layout
+from bokeh.models import Div,ColumnDataSource, DataTable,TableColumn
+from bokeh.resources import CDN
+from bokeh.embed import file_html, components
+import urllib.request
+import pandas as pd
+from io import StringIO
+
+from datetime import datetime
+import numpy as np
+
 # home page for guests (not logged in)
 @bp.route('/')
 @bp.route('/index_guest')
@@ -69,7 +81,6 @@ def edit_profile():
         form.DOB.data = current_user.DOB
     return render_template('main/edit_profile.html', title='Edit Profile',
                            form=form)
-
 
 # BELOW ARE THE ROUTES THAT GRAB THE USER'S TEST RESULTS 
 
@@ -114,8 +125,10 @@ def newEMGtest(username):
 # deletes all packets for the given user
 @bp.route('/deletetests/<username>')
 def delete_all_tests(username):
+    global seen_packets
     user = User.query.filter_by(username=username).first_or_404()
     packets = user.packets.all()
+    seen_packets = []
     for p in packets:
         db.session.delete(p)
     db.session.commit()
@@ -147,8 +160,9 @@ def new_packet(user, test_type):
     data=str(bytes_csv,'utf-8')
     thingspeak_data = pd.read_csv(StringIO(data))
     body_df = pd.DataFrame(thingspeak_data)
+    table_length = len(body_df.index)
     # creates new packet for every row in index and adds packet to our packet_queue 
-    while grab < len(body_df.index) and done is False: 
+    while grab < table_length and done is False: 
         this_row = thingspeak_data.iloc[grab] 
         entry_id = str(this_row['entry_id']) # save the entry id for this row
         # check seen packets array for this entry_id
@@ -164,25 +178,12 @@ def new_packet(user, test_type):
             done = True
         grab += 1 
     return done
-'''
-def new_EMGpacket(user):
-    url = test_types['EMG'] # grab from appropriate channel. each test type will has its own channel
-    thingspeak_read = urllib.request.urlopen(url)
-    bytes_csv = thingspeak_read.read()
-    data=str(bytes_csv,'utf-8')
-    thingspeak_data = pd.read_csv(StringIO(data))
-    body_df = pd.DataFrame(thingspeak_data)
-    #this_row = thingspeak_data.iloc[1] 
-    #test_taken = "Test Taken: "+ this_row['created_at']
-    #p = Packet(body=body_df, author=user, test_type=str('EMG'))
-    #db.session.add(p)
-    #db.session.commit()
-'''
 
 # route for view entire test result 
 @bp.route('/open_packet/<username>/<packet_id>')
 def open_packet(username, packet_id):
     user = User.query.filter_by(username=username).first_or_404()
+    #pulse_data(packet_id)
     return render_template('main/view_test.html', user=user, packet=Packet.query.get(packet_id))
 
 # route for test visualization/chart page
@@ -190,3 +191,169 @@ def open_packet(username, packet_id):
 def test_chart(username):
     user = User.query.filter_by(username=username).first_or_404()
     return render_template('main/test_chart.html', user=user)
+
+@bp.route('/pulse_data')
+def pulse_data(packet_id):
+    # Get Data from thingSpeak
+    results = urllib.request.urlopen('https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33')
+    bytes_csv = results.read()
+    data=str(bytes_csv,'utf-8')
+    db =pd.read_csv(StringIO(data))
+    db=db.rename(columns={'created_at':'created_at','entry_id':'entry_id','field1':'Username','field2':'Sensor Name','field3':'Value','field4':'Date','field5':'Time'})
+    db=db.sort_values(by=['entry_id'])
+    grab = 0
+    done = False
+    while grab < 20 and done is False: 
+        # verify this is the right packet
+        this_row = db.iloc[-grab]
+        if packet_id == this_row['entry_id']: # save the entry id for this row
+            done = True
+        grab += 1
+    # Set varaiables
+    pulse_reading = this_row['Value'] # Last entry
+    #pulse_reading = db.iloc[-1]['Value'] # Last entry
+    x_data = db['entry_id'] # Entry numbers
+    y_data = db['Value'] # Data values
+
+    # Color map for single pulse data
+    color = 'red'
+    level = 'Danger'
+    
+    if(pulse_reading >=54 and pulse_reading<=73):
+        color = 'green'
+        level = 'Good'
+    elif(pulse_reading >=74 and pulse_reading<=84):
+        color = 'yellow'
+        level = 'Average'
+    elif(pulse_reading >=85):
+        color = 'red'
+        level = 'High'
+    else:
+        color = 'red'
+        level = 'Danger'
+    tools = ['hover']
+
+    div = Div(
+    text = ("""<h1> {pulse} BPM </h1> {levels} """).format(pulse=pulse_reading,levels =level), width = 700,style={'font-size': '300%','color': color}
+    )
+    output_file(filename='website/templates/main/pulse/view_.html')
+    show(div)
+    render_template('pulse/view_.html')
+    
+@bp.route('/pulse_plot')
+def pulse_plot():
+    output_file(filename='Pulse_Plot.html',title='Pulse Plot')
+    # Get Data from thingSpeak
+    results = urllib.request.urlopen('https://api.thingspeak.com/channels/1649676/feeds.csv?api_key=JLVZFZMPYNBHIU33')
+    bytes_csv = results.read()
+    data=str(bytes_csv,'utf-8')
+    db =pd.read_csv(StringIO(data))
+    db=db.rename(columns={'created_at':'created_at','entry_id':'entry_id','field1':'Username','field2':'Sensor Name','field3':'Value','field4':'Date','field5':'Time'})
+    db=db.sort_values(by=['entry_id'])
+
+    # Set varaiables
+    pulse_reading = db.iloc[-1]['Value'] # Last entry
+    x_data = db['entry_id'] # Entry numbers
+    y_data = db['Value'] # Data values
+
+    # Color map for single pulse data
+    color = 'red'
+    level = 'Danger'
+    
+    if(pulse_reading >=54 and pulse_reading<=73):
+        color = 'green'
+        level = 'Good'
+    elif(pulse_reading >=74 and pulse_reading<=84):
+        color = 'yellow'
+        level = 'Average'
+    elif(pulse_reading >=85):
+        color = 'red'
+        level = 'High'
+    else:
+        color = 'red'
+        level = 'Danger'
+    tools = ['hover']
+
+    div = Div(
+    text = ("""<h1> {pulse} BPM </h1> {levels} """).format(pulse=pulse_reading,levels =level), width = 700,style={'font-size': '300%','color': color}
+    )
+    
+    plot = figure(plot_width=600,plot_height=500,tools=tools)
+    plot.line(x=x_data,y=y_data)
+    plot.circle_dot(x=x_data,y=y_data)
+    plot.title.text = 'Pulse Trend over Time'
+
+    dates = db['Date'].to_list
+    times = db['Time']
+    values = db['Value']
+    name = db['Sensor Name']
+    s = ColumnDataSource(db)
+    c = [
+        TableColumn(field='Date',title="Date"),
+        TableColumn(field='Time',title="Time"),
+        TableColumn(field='Sensor Name',title="Sensor Name"),
+        TableColumn(field='Value',title="Value")
+        ]
+    t = DataTable(source = s, columns = c,width=500,height=2000)
+    
+    ly_out = layout([[div],[plot],[t]])
+    output_file(filename='website/templates/main/Pulse_Plot.html')
+    show(ly_out)
+    return render_template('main/Pulse_Plot.html')
+
+
+# NOT WORKING
+@bp.route('/emg_plot')
+def emg_plot():
+
+    count = 0
+
+    read_data()
+
+    # In[3]:
+
+    plot = figure(width = 900, height = 350)
+    source = ColumnDataSource(dict(x=[], y=[]))
+    plot.line(x='x',y='y',source=source)
+
+
+    # In[5]:
+
+    lout = layout([plot])
+    curdoc.title = "DATA"
+    curdoc().add_root(lout)
+    curdoc().add_periodic_callback(update,500)
+    output_file(filename='website/templates/main/emg_plotter.html')
+    show(lout)
+    return render_template('/main/emg_plotter.html')
+    
+
+    
+def update(count):
+    print(count)
+    emg_data,time_data = read_data()
+    temp1 = [time_data[count]]
+    temp2 = [emg_data[count]]
+    stream_data=dict(x=temp1,y=temp2)
+    source.stream(stream_data)
+    plot.title.text = 'EMG'
+    count = count + 1
+    
+def read_data():
+    results = urllib.request.urlopen('https://api.thingspeak.com/channels/1664068/feeds.csv?api_key=NJCHLCB72TL1X017&results=160')
+    bytes_csv = results.read()
+    data=str(bytes_csv,'utf-8')
+    db =pd.read_csv(StringIO(data))
+    db=db.rename(columns={'created_at':'created_at','entry_id':'entry_id','field1':'Data','field2':'Time'})
+    db=db.sort_values(by=['entry_id'])
+
+    emg_data=db['Data'].tolist()
+    time_data=db['Time'].tolist()
+    t_data = time_data[0]
+    t_array =[]
+    t_array.append(t_data)
+    for i in time_data[1:]:
+        t_array.append(t_data+i)
+        t_data = t_data + i
+
+    return emg_data,t_array

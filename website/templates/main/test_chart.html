@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1> Charts for: {{user.username}}</h1>
+<h1> Test Result Visualizations </h1>
 <a href="{{ url_for('main.user', username=current_user.username)}}">back to all tests</a></p>
 <p><td>User: {{user.username}}</td></p>
 
 <table>
-   <p>This is where bokeh visualizations will be </p>
+   <p> EMG Chart </p>
+ <iframe width="470" height="270" style="border: 1px solid #cccccc;" src="https://thingspeak.com/apps/matlab_visualizations/451630?size=iframe"></iframe>
 
     
 </table>

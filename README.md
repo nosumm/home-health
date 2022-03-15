@@ -1,6 +1,6 @@
 # home-health 
 
-Hardware code: .c files are located hardware/Core/Src and .h files are located in hardware/Core/Inc
+Hardware code: .c files are located HomeHealthSensor/Core/Src and .h files are located in HomeHealthSensor/Core/Inc
 
 Website code: 
 All website files are located in the website folder. 

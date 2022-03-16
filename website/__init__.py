@@ -9,7 +9,6 @@ from flask_mail import Mail
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_babel import Babel, lazy_gettext as _l
-from elasticsearch import Elasticsearch
 from redis import Redis
 import rq
 from config import Config
@@ -91,3 +90,5 @@ def create_app(config_class=Config):
         app.logger.info('Website startup')
 
     return app
+
+from app import models 

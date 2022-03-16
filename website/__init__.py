@@ -12,7 +12,7 @@ from flask_babel import Babel, lazy_gettext as _l
 from elasticsearch import Elasticsearch
 from redis import Redis
 import rq
-from website.config import Config
+from config import Config
 
 db = SQLAlchemy()
 migrate = Migrate()

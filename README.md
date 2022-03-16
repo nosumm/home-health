@@ -9,9 +9,9 @@ Our CSS file and images are located in website/static.
 website/auth contains all the code that authenticates users during the sign up and log in process on the website. 
 website/errors contains the code that handles errors on the website. 
 website/about contains the code for our about and home page. 
-website/main contains the code that grabs test result data and connects our user accounts db (SQLite) to our sensor data db (Thingspeak). 
+website/main contains the code that grabs test result data and connects our user accounts db to our sensor data db (Thingspeak). 
 
-Website Developed with: Python Flask, Jinja2 and HTML, and some CSS.  
+Website Developed with: Python Flask, Jinja2 and HTML, and some CSS and JS.  
 
 Hosted on Heroku --> using Heroku Postgres Database 
 

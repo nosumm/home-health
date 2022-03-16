@@ -1,4 +1,4 @@
-FLASK_APP=app
+FLASK_APP=app.py
 FLASK_ENV=development
 
 MAIL_SERVER=smtp.googlemail.com
